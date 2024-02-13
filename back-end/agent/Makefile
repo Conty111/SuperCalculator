@@ -8,6 +8,9 @@ LDFLAGS += -s -w
 # inject build info
 LDFLAGS += -X ${PROJECT_PKG}/internal/app/build.Version=${VERSION} -X ${PROJECT_PKG}/internal/app/build.CommitHash=${COMMIT_HASH} -X ${PROJECT_PKG}/internal/app/build.BuildDate=${BUILD_DATE}
 
+run:
+	go run -v ./cmd/app/main.go serve
+
 start-docker-compose-test:
 	docker-compose -f docker-compose-test.yml up -d
 
@@ -29,15 +32,23 @@ gen:
 deps:
 	wire ./...
 
+swagger:
+	swag init --parseDependency -g cmd/app/main.go --output=./api/web
+
 proto:
 	protoc --go_out=plugins=grpc:. internal/grpc/schema/*.proto
 
 install-tools:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin
-	go get github.com/google/wire/cmd/wire
+	#curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.33.0
+	go get -u github.com/google/wire/cmd/wire
 	go get -u github.com/onsi/ginkgo/ginkgo
-	go get -u github.com/swaggo/swag/cmd/swag
-	go mod tidy
+	go install github.com/swaggo/swag/cmd/swag
+	go install github.com/gin-gonic/gin
+	go install github.com/joho/godotenv
+	go get -u go.mongodb.org/mongo-driver
+	go install github.com/golang/mock/mockgen@v1.6.0
 
-lint:
-	golangci-lint run ./back-end/orkestrator/...
+gen-keys:
+	mkdir -p cert
+	openssl ecparam -name prime256v1 -genkey -noout -out cert/ec-prime256v1-priv-key.pem
+	openssl ec -in cert/ec-prime256v1-priv-key.pem -pubout > cert/ec-prime256v1-pub-key.pem

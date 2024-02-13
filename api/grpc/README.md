@@ -1,1 +1,0 @@
-# Schema files(*.proto) for gRPC
