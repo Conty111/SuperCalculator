@@ -10,28 +10,28 @@ import (
 )
 
 type Configuration struct {
-	App        App
-	DB         DB
-	HTTPConfig HTTPConfig
-}
-
-type DB struct {
-	Port     uint
-	Host     string
-	Password string
-	User     string
-	DBName   string
+	App         App
+	HTTPConfig  HTTPConfig
+	ConsumerCfg ConsumerConfig
 }
 
 type App struct {
-	TimeFormat        enums.TimeFormat
-	AuthPublicKeyPath string
-	LoggerCfg         gin.LoggerConfig
+	TimeFormat    enums.TimeFormat
+	LoggerCfg     gin.LoggerConfig
+	TasksBuffSize uint
 }
 
 type HTTPConfig struct {
 	Host string
 	Port string
+}
+
+type ConsumerConfig struct {
+	Brokers        []string
+	ConsumerGroup  string
+	CommitInterval uint
+	Topic          string
+	Partition      int32
 }
 
 var config *Configuration
@@ -51,24 +51,27 @@ func getFromEnv() *Configuration {
 	var cfg = &Configuration{}
 
 	cfg.App = getAppConf()
-	cfg.DB = getDatabaseConf()
 	cfg.HTTPConfig = getWebConf()
+	cfg.ConsumerCfg = getConsumerConf()
 
 	return cfg
 }
 
-func getDatabaseConf() DB {
-	var cfg = DB{}
-
-	cfg.Host = envy.Get("DB_HOST", "0.0.0.0")
-	port, err := strconv.Atoi(envy.Get("DB_PORT", "27017"))
+func getConsumerConf() ConsumerConfig {
+	var cfg = ConsumerConfig{}
+	cfg.Brokers = strings.Split(envy.Get("BROKERS", "kafka-broker-broker:9092"), ";")
+	cfg.Topic = envy.Get("TOPIC", "expressions")
+	cfg.ConsumerGroup = envy.Get("CONSUMER_GROUP", "agent_group")
+	interval, err := strconv.Atoi(envy.Get("COMMIT_INTERVAL", "1"))
 	if err != nil {
 		log.Fatal().Err(err)
 	}
-	cfg.Port = uint(port)
-	cfg.DBName = envy.Get("DB_NAME", "test")
-	cfg.User = envy.Get("DB_USER", "mongo-repo")
-	cfg.Password = envy.Get("DB_PASSWORD", "mongo-repo")
+	partition, err := strconv.Atoi(envy.Get("PARTITION", "0"))
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+	cfg.CommitInterval = uint(interval)
+	cfg.Partition = int32(partition)
 
 	return cfg
 }
@@ -84,7 +87,11 @@ func getAppConf() App {
 		cfg.TimeFormat = enums.RFC3339Nano
 	}
 	cfg.LoggerCfg = gin.LoggerConfig{}
-	cfg.AuthPublicKeyPath = envy.Get("AUTH_PUBLIC_KEY_PATH", "cert/ec-prime256v1-pub-key.pem")
+	size, err := strconv.Atoi(envy.Get("EXPRESSIONS_BUFF_SIZE", "10"))
+	if err != nil {
+		log.Fatal().Err(err).Msg("error while getting buff size")
+	}
+	cfg.TasksBuffSize = uint(size)
 
 	return cfg
 }

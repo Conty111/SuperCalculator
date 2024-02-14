@@ -2,25 +2,50 @@ package services
 
 import (
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/agent_errors"
+	"math"
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 )
 
 type ExpressionService struct {
-	AddTime         time.Duration
-	MultiplyTime    time.Duration
-	DivisionTime    time.Duration
-	SubtractionTime time.Duration
-	chars           []rune
+	Locker             *sync.Mutex
+	AddTime            time.Duration
+	MultiplyTime       time.Duration
+	DivisionTime       time.Duration
+	SubtractionTime    time.Duration
+	ExponentiationTime time.Duration
+	chars              []rune
 }
 
 func NewExpressionService() *ExpressionService {
 	return &ExpressionService{
-		chars: []rune{'+', '-', '*', '/', '(', ')'},
+		Locker: &sync.Mutex{},
+		chars:  []rune{'+', '-', '*', '/', '(', ')', '^', '.'},
 	}
+}
+
+func (es *ExpressionService) SetOperationDuration(operation rune, t time.Duration) error {
+	es.Locker.Lock()
+	defer es.Locker.Unlock()
+	switch operation {
+	case '-':
+		es.SubtractionTime = t
+	case '+':
+		es.AddTime = t
+	case '/':
+		es.DivisionTime = t
+	case '*':
+		es.MultiplyTime = t
+	case '^':
+		es.ExponentiationTime = t
+	default:
+		return agent_errors.ErrInvalidChar(operation)
+	}
+	return nil
 }
 
 func (es *ExpressionService) Calculate(expression string) (float64, error) {
@@ -44,7 +69,7 @@ func (es *ExpressionService) Calculate(expression string) (float64, error) {
 	return result, nil
 }
 
-// ValidateExpression Check if expression is valid and return it
+// ValidateExpression Check if expression is valid and reformat it
 func (es *ExpressionService) ValidateExpression(expression string) (string, error) {
 	// Проверяем наличие соответствия открытых и закрытых скобок
 	expression = strings.ReplaceAll(expression, " ", "")
@@ -63,8 +88,14 @@ func (es *ExpressionService) ValidateExpression(expression string) (string, erro
 	}
 
 	// Проверяем корректность символов в выражении
-	for _, char := range expression {
-		if !unicode.IsDigit(char) && !slices.Contains(es.chars, char) {
+	for i, char := range expression {
+		if char == '.' {
+			// Проверяем, что точка не является первым или последним символом, и перед и после точки есть цифры
+			if i == 0 || i == len(expression)-1 || !unicode.IsDigit(rune(expression[i-1])) || !unicode.IsDigit(rune(expression[i+1])) {
+				return "", agent_errors.ErrInvalidFloat
+			}
+		} else if !unicode.IsDigit(char) && !slices.Contains(es.chars, char) {
+			// Проверяем на неправильные вещественные числа (например, "2. * 3")
 			return "", agent_errors.ErrInvalidChar(char)
 		}
 	}
@@ -81,7 +112,7 @@ func (es *ExpressionService) ParseToInfix(expression string) ([]float64, []strin
 	i := 0
 	for i < len(expression) {
 		switch expression[i] {
-		case '+', '-', '*', '/':
+		case '+', '-', '*', '/', '^':
 			operators = append(operators, string(expression[i]))
 			i++
 		case '(':
@@ -146,6 +177,10 @@ func (es *ExpressionService) CalculateInfix(operands []float64, operators []stri
 			// Задержка для учета времени выполнения деления
 			time.Sleep(es.DivisionTime)
 			result /= operands[i+1]
+		case "^":
+			// Задержка для учета времени выполнения возведения в степень
+			time.Sleep(es.ExponentiationTime)
+			result = math.Pow(result, operands[i+1])
 		}
 	}
 
