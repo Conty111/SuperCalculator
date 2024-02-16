@@ -4,7 +4,6 @@ import (
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/services"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/web/controllers/apiv1"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/web/helpers"
-	"github.com/Conty111/SuperCalculator/back-end/models"
 	"github.com/gin-gonic/gin"
 
 	"net/http"
@@ -43,12 +42,16 @@ func (ctrl *Controller) GetRelativePath() string {
 // @Success 200 {object} ResponseDoc
 // @Router /api/v1/calculator [put]
 func (ctrl *Controller) SetTime(ctx *gin.Context) {
-	var body models.DurationSettings
+	var body RequestBody
 	if err := ctx.ShouldBind(&body); err != nil {
 		helpers.WriteErrResponse(ctx, err)
 		return
 	}
-	ctrl.Service.SetOperationDuration(&body)
+	err := ctrl.Service.SetOperationDuration(body.Operation, body.Duration)
+	if err != nil {
+		helpers.WriteErrResponse(ctx, err)
+		return
+	}
 	ctx.JSON(http.StatusOK, &Response{
 		Status:  http.StatusText(http.StatusOK),
 		Message: "time duration successfully updated",
