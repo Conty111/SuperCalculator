@@ -7,6 +7,7 @@ import (
 
 type Monitor struct {
 	Lock            *sync.RWMutex
+	AgentID         int32
 	EmployedWorkers uint
 	FreeWorkers     uint
 	CompletedTasks  uint

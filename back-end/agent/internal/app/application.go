@@ -2,13 +2,12 @@ package app
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/app/dependencies"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/app/initializers"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/config"
-	"github.com/Conty111/SuperCalculator/back-end/agent/internal/models"
 	kafka_broker "github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/kafka-broker"
+	"github.com/Conty111/SuperCalculator/back-end/models"
 	"github.com/rs/zerolog/log"
 	"net/http"
 )
@@ -17,24 +16,28 @@ import (
 type Application struct {
 	httpServer *http.Server
 	consumer   *kafka_broker.AppConsumer
+	producer   *kafka_broker.AppProducer
 	Container  *dependencies.Container
 }
 
 // InitializeApplication initializes new application
-func InitializeApplication() (*Application, error) {
+func InitializeApplication(ctx context.Context) (*Application, error) {
 	initializers.InitializeEnvs()
 
 	if err := initializers.InitializeLogs(); err != nil {
 		return nil, err
 	}
 
-	return BuildApplication()
+	return BuildApplication(ctx)
 }
 
-func BuildApplication() (*Application, error) {
+func BuildApplication(ctx context.Context) (*Application, error) {
 	cfg := config.GetConfig()
+	cfg.BrokerCfg.Partition = ctx.Value("partition").(int32)
+	cfg.HTTPConfig.Port = ctx.Value("http_port").(string)
 	info := initializers.InitializeBuildInfo()
 	monitor := initializers.InitializeMonitor()
+	monitor.AgentID = cfg.BrokerCfg.Partition
 	svc := initializers.InitializeExpressionService()
 	container := &dependencies.Container{
 		BuildInfo:     info,
@@ -44,12 +47,14 @@ func BuildApplication() (*Application, error) {
 	}
 
 	consumer := initializers.InitializeConsumer(container)
+	producer := initializers.InitializeProducer(container)
 	router := initializers.InitializeRouter(container)
 	server := initializers.InitializeHTTPServer(router, &cfg.HTTPConfig)
 
 	return &Application{
 		httpServer: server,
 		consumer:   consumer,
+		producer:   producer,
 		Container:  container,
 	}, nil
 }
@@ -59,14 +64,15 @@ func (a *Application) Start(ctx context.Context, cli bool) {
 	if cli {
 		return
 	}
-
 	a.startHTTPServer()
 	a.startProducer(a.startConsumer())
 }
 
 // Stop stops application services
 func (a *Application) Stop() (err error) {
+	log.Info().Msg("gracefully stopping")
 	a.consumer.Stop()
+	a.producer.Stop()
 	return a.httpServer.Shutdown(context.TODO())
 }
 
@@ -86,11 +92,5 @@ func (a *Application) startConsumer() <-chan models.Result {
 }
 
 func (a *Application) startProducer(msgChannel <-chan models.Result) {
-	go func() {
-		for res := range msgChannel {
-			data, err := json.Marshal(res)
-			log.Error().Err(err).Msg("Error while trying to marshal to json")
-			log.Debug().Str("task", string(data)).Msg("Executed")
-		}
-	}()
+	a.producer.Start(msgChannel)
 }

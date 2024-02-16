@@ -4,6 +4,7 @@ import (
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/app/dependencies"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/config"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/web/controllers/apiv1"
+	apiv1Calculator "github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/web/controllers/apiv1/calculator"
 	apiv1Status "github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/web/controllers/apiv1/status"
 	apiv1Swagger "github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/web/controllers/apiv1/swagger"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/web/middleware"
@@ -35,6 +36,7 @@ func initializeMiddlewares(r gin.IRouter, appConfig *config.App) {
 
 func buildControllers(container *dependencies.Container) []apiv1.Controller {
 	return []apiv1.Controller{
+		apiv1Calculator.NewController(container.ExpressionSvc),
 		apiv1Status.NewController(container.BuildInfo, container.Monitor),
 		apiv1Swagger.NewController(),
 	}

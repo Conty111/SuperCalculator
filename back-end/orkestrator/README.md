@@ -81,11 +81,11 @@
 # install dev tools(wire, golangci-lint, swag, ginkgo)
 make install-tools
 
-# start test environment from docker-compose-test.yml
-make start-docker-compose-test
+# start test environment from docker-compose.yml-test.yml
+make start-docker-compose.yml-test
 
-# stop test environment from docker-compose-test.yml
-make stop-docker-compose-test
+# stop test environment from docker-compose.yml-test.yml
+make stop-docker-compose.yml-test
 
 # build application
 make build

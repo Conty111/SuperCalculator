@@ -2,17 +2,19 @@ package config
 
 import (
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/enums"
+	"github.com/IBM/sarama"
 	"github.com/gin-gonic/gin"
 	"github.com/gobuffalo/envy"
 	"github.com/rs/zerolog/log"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Configuration struct {
-	App         App
-	HTTPConfig  HTTPConfig
-	ConsumerCfg ConsumerConfig
+	App        App
+	HTTPConfig HTTPConfig
+	BrokerCfg  BrokerConfig
 }
 
 type App struct {
@@ -26,11 +28,13 @@ type HTTPConfig struct {
 	Port string
 }
 
-type ConsumerConfig struct {
+type BrokerConfig struct {
+	SaramaCfg      *sarama.Config
 	Brokers        []string
 	ConsumerGroup  string
 	CommitInterval uint
-	Topic          string
+	ConsumeTopic   string
+	ProduceTopic   string
 	Partition      int32
 }
 
@@ -52,26 +56,28 @@ func getFromEnv() *Configuration {
 
 	cfg.App = getAppConf()
 	cfg.HTTPConfig = getWebConf()
-	cfg.ConsumerCfg = getConsumerConf()
+	cfg.BrokerCfg = getConsumerConf()
 
 	return cfg
 }
 
-func getConsumerConf() ConsumerConfig {
-	var cfg = ConsumerConfig{}
+func getConsumerConf() BrokerConfig {
+	var cfg = BrokerConfig{}
 	cfg.Brokers = strings.Split(envy.Get("BROKERS", "kafka-broker-broker:9092"), ";")
-	cfg.Topic = envy.Get("TOPIC", "expressions")
+	cfg.ConsumeTopic = envy.Get("TASKS_TOPIC", "tasks")
+	cfg.ProduceTopic = envy.Get("RESULTS_TOPIC", "results")
 	cfg.ConsumerGroup = envy.Get("CONSUMER_GROUP", "agent_group")
 	interval, err := strconv.Atoi(envy.Get("COMMIT_INTERVAL", "1"))
 	if err != nil {
 		log.Fatal().Err(err)
 	}
-	partition, err := strconv.Atoi(envy.Get("PARTITION", "0"))
-	if err != nil {
-		log.Fatal().Err(err)
-	}
 	cfg.CommitInterval = uint(interval)
-	cfg.Partition = int32(partition)
+	cfg.SaramaCfg = sarama.NewConfig()
+	cfg.SaramaCfg.Consumer.Return.Errors = true
+	cfg.SaramaCfg.Producer.Return.Successes = true
+	cfg.SaramaCfg.Consumer.Offsets.Initial = sarama.OffsetNewest
+	cfg.SaramaCfg.Consumer.Offsets.AutoCommit.Enable = true
+	cfg.SaramaCfg.Consumer.Offsets.AutoCommit.Interval = 100 * time.Millisecond
 
 	return cfg
 }

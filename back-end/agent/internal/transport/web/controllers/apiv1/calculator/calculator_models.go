@@ -1,7 +1,5 @@
 package calculator
 
-import "time"
-
 // Response is a declaration for a status response
 type Response struct {
 	Status  string `jsonapi:"attr,status"`
@@ -9,6 +7,6 @@ type Response struct {
 }
 
 type RequestBody struct {
-	Operation rune          `json:"operation"`
-	Duration  time.Duration `json:"duration"`
+	Operation string  `json:"operation"`
+	Duration  float64 `json:"duration"`
 }

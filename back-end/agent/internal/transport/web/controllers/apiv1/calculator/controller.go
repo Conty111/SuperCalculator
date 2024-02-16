@@ -4,7 +4,6 @@ import (
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/services"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/web/controllers/apiv1"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/web/helpers"
-	"github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/web/render"
 	"github.com/gin-gonic/gin"
 
 	"net/http"
@@ -24,6 +23,7 @@ type Controller struct {
 // NewController creates new status controller instance
 func NewController(svc *services.ExpressionService) *Controller {
 	return &Controller{
+		Service:      svc,
 		RelativePath: "/calculator",
 	}
 }
@@ -52,9 +52,9 @@ func (ctrl *Controller) SetTime(ctx *gin.Context) {
 		helpers.WriteErrResponse(ctx, err)
 		return
 	}
-	render.JSONAPIPayload(ctx, http.StatusOK, &Response{
+	ctx.JSON(http.StatusOK, &Response{
 		Status:  http.StatusText(http.StatusOK),
-		Message: "time successfully updated",
+		Message: "time duration successfully updated",
 	})
 }
 
