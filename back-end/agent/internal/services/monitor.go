@@ -1,7 +1,7 @@
 package services
 
 import (
-	"github.com/Conty111/SuperCalculator/back-end/agent/internal/models"
+	"github.com/Conty111/SuperCalculator/back-end/models"
 	"sync"
 )
 

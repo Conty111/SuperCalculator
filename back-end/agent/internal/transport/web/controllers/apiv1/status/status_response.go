@@ -1,7 +1,7 @@
 package status
 
 import (
-	"github.com/Conty111/SuperCalculator/back-end/agent/internal/models"
+	"github.com/Conty111/SuperCalculator/back-end/models"
 )
 
 // Response is a declaration for a status response

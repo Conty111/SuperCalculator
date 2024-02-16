@@ -1,7 +1,7 @@
 package initializers
 
 import (
-	"github.com/Conty111/SuperCalculator/back-end/agent/internal/app/build"
+	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/app/build"
 )
 
 // InitializeBuildInfo creates new build.Info

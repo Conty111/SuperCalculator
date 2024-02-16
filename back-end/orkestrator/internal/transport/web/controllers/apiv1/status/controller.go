@@ -1,9 +1,9 @@
 package status
 
 import (
-	"github.com/Conty111/SuperCalculator/back-end/agent/internal/app/build"
-	"github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/web/controllers/apiv1"
-	"github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/web/render"
+	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/app/build"
+	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/controllers/apiv1"
+	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/render"
 	"github.com/gin-gonic/gin"
 
 	"net/http"
