@@ -3,11 +3,11 @@ package app
 import (
 	"context"
 	"errors"
-	"github.com/Conty111/SuperCalculator/back-end/agent/internal/config"
+	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/config"
 	"net/http"
 
-	"github.com/Conty111/SuperCalculator/back-end/agent/internal/app/dependencies"
-	"github.com/Conty111/SuperCalculator/back-end/agent/internal/app/initializers"
+	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/app/dependencies"
+	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/app/initializers"
 	"github.com/rs/zerolog/log"
 )
 
@@ -31,14 +31,16 @@ func InitializeApplication() (*Application, error) {
 func BuildApplication() (*Application, error) {
 	cfg := config.GetConfig()
 	info := initializers.InitializeBuildInfo()
+	db := initializers.InitializeDatabase(cfg.DB.DSN)
 
 	container := &dependencies.Container{
 		BuildInfo: info,
 		Config:    cfg,
+		Database:  db,
 	}
 
 	router := initializers.InitializeRouter(container)
-	server := initializers.InitializeHTTPServer(router, &cfg.HTTPConfig)
+	server := initializers.InitializeHTTPServer(router, cfg.HTTPConfig)
 
 	return &Application{
 		httpServer: server,
