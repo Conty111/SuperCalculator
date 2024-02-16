@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -14,10 +15,10 @@ import (
 
 // NewServeCmd starts new application instance
 func NewServeCmd() *cobra.Command {
-	return &cobra.Command{
+	command := &cobra.Command{
 		Use:     "serve",
 		Aliases: []string{"s"},
-		Short:   "Start server",
+		Short:   "starts agent",
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Info().Msg("Starting")
 
@@ -27,7 +28,18 @@ func NewServeCmd() *cobra.Command {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
-			application, err := app.InitializeApplication()
+			http_port, err := cmd.Flags().GetUint("http_port")
+			if err != nil {
+				log.Fatal().Err(err).Msg("failed to get http_port flags value")
+			}
+			ctx = context.WithValue(ctx, "http_port", strconv.Itoa(int(http_port)))
+			num, err := cmd.Flags().GetUint("agent_id")
+			if err != nil {
+				log.Fatal().Err(err).Msg("failed to get http_port flags value")
+			}
+			ctx = context.WithValue(ctx, "partition", int32(num))
+
+			application, err := app.InitializeApplication(ctx)
 
 			if err != nil {
 				log.Fatal().Err(err).Msg("can not initialize application")
@@ -45,4 +57,7 @@ func NewServeCmd() *cobra.Command {
 			log.Info().Msg("Finished")
 		},
 	}
+	command.PersistentFlags().Uint("agent_id", 0, "equal to number of partition which should be used by consumer")
+	command.PersistentFlags().Uint("http_port", 8000, "http server port")
+	return command
 }
