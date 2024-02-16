@@ -17,13 +17,12 @@ import (
 )
 
 type ExpressionService struct {
-	Locker             *sync.Mutex
-	AddTime            time.Duration
-	MultiplyTime       time.Duration
-	DivisionTime       time.Duration
-	SubtractionTime    time.Duration
-	ExponentiationTime time.Duration
-	chars              []rune
+	Locker          *sync.Mutex
+	AddTime         time.Duration
+	MultiplyTime    time.Duration
+	DivisionTime    time.Duration
+	SubtractionTime time.Duration
+	chars           []rune
 }
 
 func NewExpressionService() *ExpressionService {
@@ -59,28 +58,11 @@ func (es *ExpressionService) Proccess(msg *sarama.ConsumerMessage) (*models.Resu
 	}, nil
 }
 
-func (es *ExpressionService) SetOperationDuration(operation string, seconds float64) error {
-	if seconds < 0 {
-		seconds = 0
-	}
-	t := time.Duration(seconds) * time.Second
-	es.Locker.Lock()
-	defer es.Locker.Unlock()
-	switch operation {
-	case "-":
-		es.SubtractionTime = t
-	case "+":
-		es.AddTime = t
-	case "/":
-		es.DivisionTime = t
-	case "*":
-		es.MultiplyTime = t
-	case "^":
-		es.ExponentiationTime = t
-	default:
-		return fmt.Errorf("invalid operation: %s", operation)
-	}
-	return nil
+func (es *ExpressionService) SetOperationDuration(settings *models.DurationSettings) {
+	es.DivisionTime = time.Second * time.Duration(settings.DivisionDuration)
+	es.MultiplyTime = time.Second * time.Duration(settings.MultiplyDuration)
+	es.SubtractionTime = time.Second * time.Duration(settings.SubtractDuration)
+	es.AddTime = time.Second * time.Duration(settings.AddDuration)
 }
 
 func (es *ExpressionService) Calculate(expression string) (float64, error) {
@@ -225,7 +207,7 @@ func (es *ExpressionService) CalculateInfix(operands []float64, operators []stri
 			result /= operands[i+1]
 		case "^":
 			// Задержка для учета времени выполнения возведения в степень
-			time.Sleep(es.ExponentiationTime)
+			time.Sleep(es.MultiplyTime * time.Duration(operands[i+1]))
 			result = math.Pow(result, operands[i+1])
 		}
 	}
