@@ -38,7 +38,7 @@ func NewServeCmd() *cobra.Command {
 
 			log.Info().Msg("Started")
 			<-sigchan
-
+			ctx.Done()
 			log.Error().Err(application.Stop()).Msg("stop application")
 
 			time.Sleep(time.Second * cliCmdExecFinishDelaySeconds)

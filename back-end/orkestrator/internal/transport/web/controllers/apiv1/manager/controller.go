@@ -42,12 +42,12 @@ func (ctrl *Controller) GetRelativePath() string {
 // @Success 200 {object} ResponseDoc
 // @Router /api/v1/manager [put]
 func (ctrl *Controller) SetSettings(ctx *gin.Context) {
-	var body models.CalculationSettings
+	var body models.Settings
 	if err := ctx.ShouldBind(&body); err != nil {
 		helpers.WriteErrResponse(ctx, err)
 		return
 	}
-	responses, statuses := ctrl.Service.SetCalculationSettings(&body)
+	responses, statuses := ctrl.Service.SetSettings(&body)
 	ctx.JSON(http.StatusOK, &WorkersListResponse{
 		Status:    http.StatusText(http.StatusOK),
 		Responses: serializeWorkersResponse(responses, statuses),
@@ -74,6 +74,8 @@ func (ctrl *Controller) GetTasks(ctx *gin.Context) {
 		res.ID = t.ID
 		res.Expression = t.Expression
 		res.IsExecuted = t.IsExecuted
+		res.CreatedAt = t.CreatedAt
+		res.ExecutedAt = t.UpdatedAt
 		res.Error = t.Error
 		res.Value = t.Value
 		results[i] = &res

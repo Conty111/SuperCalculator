@@ -40,8 +40,9 @@ type DatabaseConfig struct {
 }
 
 type App struct {
-	LoggerCfg  gin.LoggerConfig
-	AgentCount uint
+	LoggerCfg       gin.LoggerConfig
+	TimeoutResponse time.Duration
+	TimeToRetry     time.Duration
 }
 
 type HTTPConfig struct {
@@ -76,12 +77,6 @@ func getFromEnv() *Configuration {
 	cfg.DB = getDBConfig()
 	cfg.HTTPConfig = getWebConf()
 	cfg.BrokerCfg = getBrokerConf()
-	if cfg.App.AgentCount != uint(len(cfg.HTTPConfig.AgentAddresses)) {
-		log.Fatal().
-			Uint("AgentsCount", cfg.App.AgentCount).
-			Any("AgentsAddresses", cfg.HTTPConfig.AgentAddresses).
-			Msg("count of agents not equal len of agent addresses")
-	}
 
 	return cfg
 }
@@ -106,11 +101,16 @@ func getAppConf() *App {
 	var cfg = App{}
 
 	cfg.LoggerCfg = gin.LoggerConfig{}
-	agentCount, err := strconv.Atoi(envy.Get("COUNT_AGENTS", "1"))
+	tResp, err := strconv.Atoi(envy.Get("TIMEOUT_RESPONSE", "5"))
 	if err != nil {
-		log.Fatal().Err(err).Msg("error getting AGENT_COUNT")
+		log.Fatal().Err(err).Msg("failed to get TIMEOUT_RESPONSE")
 	}
-	cfg.AgentCount = uint(agentCount)
+	tRetry, err := strconv.Atoi(envy.Get("TIME_RETRY", "5"))
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to get TIME_RETRY")
+	}
+	cfg.TimeToRetry = time.Duration(tRetry) * time.Second
+	cfg.TimeoutResponse = time.Duration(tResp) * time.Second
 
 	return &cfg
 }
