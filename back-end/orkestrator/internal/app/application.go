@@ -18,18 +18,18 @@ type Application struct {
 }
 
 // InitializeApplication initializes new application
-func InitializeApplication() (*Application, error) {
+func InitializeApplication(ctx context.Context) (*Application, error) {
 	initializers.InitializeEnvs()
 
 	if err := initializers.InitializeLogs(); err != nil {
 		return nil, err
 	}
 
-	return BuildApplication()
+	return BuildApplication(ctx)
 }
 
-func BuildApplication() (*Application, error) {
-	cfg := config.GetConfig()
+func BuildApplication(ctx context.Context) (*Application, error) {
+	cfg := config.GetConfig(ctx)
 	info := initializers.InitializeBuildInfo()
 	db := initializers.InitializeDatabase(cfg.DB.DSN)
 

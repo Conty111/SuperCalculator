@@ -40,7 +40,7 @@ func (ctrl *Controller) GetRelativePath() string {
 // @Accept json
 // @Produce json
 // @Success 200 {object} ResponseDoc
-// @Router /api/v1/manager [put]
+// @Router /api/v1/manager/settings [put]
 func (ctrl *Controller) SetSettings(ctx *gin.Context) {
 	var body models.Settings
 	if err := ctx.ShouldBind(&body); err != nil {
@@ -146,7 +146,7 @@ func serializeWorkersResponse(responses []map[string]interface{}, statuses []int
 
 // DefineRoutes adds controller routes to the router
 func (ctrl *Controller) DefineRoutes(r gin.IRouter) {
-	r.PUT("/", ctrl.SetSettings)
+	r.PUT("/settings", ctrl.SetSettings)
 	r.POST("/", ctrl.HandleTask)
 	r.GET("/workers", ctrl.GetWorkersInfo)
 	r.GET("/tasks", ctrl.GetTasks)

@@ -25,8 +25,8 @@ type TasksListResponse struct {
 }
 
 type WorkerResponse struct {
-	Status   string
-	Response map[string]interface{}
+	Status   string                 `json:"worker_response_status"`
+	Response map[string]interface{} `json:"worker_response"`
 }
 
 type WorkersListResponse struct {

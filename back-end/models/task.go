@@ -6,19 +6,19 @@ import (
 
 type TasksModel struct {
 	gorm.Model
-	Expression string  `gorm:"primaryKey;type:text;column:expression;index:expression_hash_idx"`
+	Expression string  `gorm:"primaryKey;column:expression;index:expression_hash_idx"`
 	Value      float64 `gorm:"column:value"`
-	IsExecuted bool    `gorm:"column:is_executed"`
-	Error      error   `gorm:"column:error"`
+	IsExecuted bool    `gorm:"column:is_executed;default:false"`
+	Error      string  `gorm:"column:error;type:text"`
 }
 
 type Task struct {
 	ID         uint   `json:"id"`
-	Expression string `json:"expression"`
+	Expression string `json:"expression" binding:"required"`
 }
 
 type Result struct {
 	Task
 	Value float64 `json:"value"`
-	Error error   `json:"error"`
+	Error string  `json:"error"`
 }

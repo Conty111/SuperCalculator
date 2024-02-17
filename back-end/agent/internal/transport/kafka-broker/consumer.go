@@ -1,6 +1,7 @@
 package kafka_broker
 
 import (
+	"github.com/Conty111/SuperCalculator/back-end/agent/internal/agent_errors"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/services"
 	"github.com/Conty111/SuperCalculator/back-end/models"
 	"github.com/IBM/sarama"
@@ -41,13 +42,13 @@ func (ac *AppConsumer) Start() <-chan models.Result {
 				return
 			case message := <-ac.Consumer.Messages():
 				// Обработка полученного сообщения
+				ac.Monitor.AddWork()
 				res, err := ac.Proccess(message)
 				if err != nil {
 					log.Debug().Err(err).Msg("invalid message")
 				} else {
 					out <- *res
 				}
-				log.Print(ac.Consumer.HighWaterMarkOffset())
 			}
 		}
 	}()
@@ -64,8 +65,10 @@ func (ac *AppConsumer) Proccess(msg *sarama.ConsumerMessage) (*models.Result, er
 		Time("start_time", msg.Timestamp).
 		Str("message", string(msg.Value)).
 		Msg("started processing a message")
-	res, err := ac.Service.Proccess(msg)
+	res := ac.Service.Proccess(msg)
+	if res == nil {
+		return nil, agent_errors.ErrInvalidMessage
+	}
 	log.Info().Str("time of calculation", time.Since(t1).String()).Msg("calculated")
-	// TODO handle errors here
-	return res, err
+	return res, nil
 }

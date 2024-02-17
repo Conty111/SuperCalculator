@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"github.com/IBM/sarama"
 	"github.com/gin-gonic/gin"
@@ -53,12 +54,21 @@ type HTTPConfig struct {
 
 var config *Configuration
 
-func GetConfig() *Configuration {
+func GetConfig(ctx context.Context) *Configuration {
 	if config != nil {
 		return config
 	}
 
 	cfg := getFromEnv()
+	l := ctx.Value("local").(string)
+	if l != "" {
+		base_port := int(ctx.Value("http_base_port").(uint))
+		//agents_count := int(ctx.Value("agents_count").(uint))
+		cfg.HTTPConfig.Port = strconv.Itoa(base_port)
+		//for i := base_port; i < base_port+agents_count; i++ {
+		//
+		//}
+	}
 	config = cfg
 
 	return cfg

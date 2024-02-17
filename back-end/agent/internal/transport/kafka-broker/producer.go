@@ -9,7 +9,7 @@ import (
 )
 
 type AppProducer struct {
-	Producer  sarama.AsyncProducer
+	Producer  sarama.SyncProducer
 	Monitor   *services.Monitor
 	Topic     string
 	Partition int32
@@ -17,7 +17,7 @@ type AppProducer struct {
 }
 
 func NewAppProducer(
-	producer sarama.AsyncProducer,
+	producer sarama.SyncProducer,
 	mon *services.Monitor,
 	topic string,
 	partition int32) *AppProducer {
@@ -46,8 +46,12 @@ func (ap *AppProducer) Start(messages <-chan models.Result) {
 					log.Error().Err(err).Msg("Error while trying to marshal result")
 				}
 				prodMsg.Value = sarama.ByteEncoder(data)
-				log.Info().Msg("sending result")
-				ap.Producer.Input() <- &prodMsg
+				log.Info().Str("task", string(data)).Msg("sending result")
+				p, _, err := ap.Producer.SendMessage(&prodMsg)
+				if err != nil {
+					log.Error().Int32("Partition", p).Str("message", string(data)).Err(err).Msg("Error while sending message")
+				}
+				ap.Monitor.CompleteWork(msg.ID)
 			}
 		}
 	}()

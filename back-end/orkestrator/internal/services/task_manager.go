@@ -142,7 +142,6 @@ func (tm *TaskManager) GetWorkersInfo() ([]map[string]interface{}, []int) {
 				statuses[i] = http.StatusInternalServerError
 				return
 			}
-			log.Print(body, statuses, err)
 			responseBodys[i] = body
 			statuses[i] = status
 		}()

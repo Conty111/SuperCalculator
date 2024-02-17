@@ -4,3 +4,4 @@ docs/**
 .idea
 ./build/
 .env
+back-end/db
