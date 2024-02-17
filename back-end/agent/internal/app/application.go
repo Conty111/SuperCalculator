@@ -36,8 +36,7 @@ func BuildApplication(ctx context.Context) (*Application, error) {
 	cfg.BrokerCfg.Partition = ctx.Value("partition").(int32)
 	cfg.HTTPConfig.Port = ctx.Value("http_port").(string)
 	info := initializers.InitializeBuildInfo()
-	monitor := initializers.InitializeMonitor()
-	monitor.AgentID = cfg.BrokerCfg.Partition
+	monitor := initializers.InitializeMonitor(cfg.BrokerCfg.Partition)
 	svc := initializers.InitializeExpressionService()
 	container := &dependencies.Container{
 		BuildInfo:     info,

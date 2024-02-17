@@ -32,12 +32,14 @@ func NewExpressionService() *ExpressionService {
 	}
 }
 
-func (es *ExpressionService) Proccess(msg *sarama.ConsumerMessage) (*models.Result, error) {
+func (es *ExpressionService) Proccess(msg *sarama.ConsumerMessage) *models.Result {
 	var t models.Task
+	var r models.Result
 	if err := json.Unmarshal(msg.Value, &t); err != nil {
 		log.Error().Msg("Error while parsing json")
-		return nil, err
+		return nil
 	}
+	r.Task = t
 	log.Debug().Any("task", t).Str("key", string(msg.Key)).Msg("parsed to json")
 	//key, err := strconv.Atoi(string(msg.Key))
 	//if err != nil {
@@ -46,23 +48,25 @@ func (es *ExpressionService) Proccess(msg *sarama.ConsumerMessage) (*models.Resu
 	//t.ID = uint(key)
 	expression, err := es.ValidateExpression(t.Expression)
 	if err != nil {
-		return nil, err
+		r.Error = err.Error()
+		return &r
 	}
 	resNum, err := es.Calculate(expression)
 	if err != nil {
-		return nil, err
+		r.Error = err.Error()
+		return &r
 	}
-	return &models.Result{
-		Value: resNum,
-		Task:  t,
-	}, nil
+	r.Value = resNum
+	return &r
 }
 
 func (es *ExpressionService) SetOperationDuration(settings *models.DurationSettings) {
-	es.DivisionTime = time.Second * time.Duration(settings.DivisionDuration)
-	es.MultiplyTime = time.Second * time.Duration(settings.MultiplyDuration)
-	es.SubtractionTime = time.Second * time.Duration(settings.SubtractDuration)
-	es.AddTime = time.Second * time.Duration(settings.AddDuration)
+	es.Locker.Lock()
+	defer es.Locker.Unlock()
+	es.DivisionTime = time.Millisecond * time.Duration(settings.DivisionDuration)
+	es.MultiplyTime = time.Millisecond * time.Duration(settings.MultiplyDuration)
+	es.SubtractionTime = time.Millisecond * time.Duration(settings.SubtractDuration)
+	es.AddTime = time.Millisecond * time.Duration(settings.AddDuration)
 }
 
 func (es *ExpressionService) Calculate(expression string) (float64, error) {

@@ -15,7 +15,7 @@ func InitializeConsumer(container *dependencies.Container) *kafka_broker.AppCons
 	con, err := consumer.ConsumePartition(
 		container.Config.BrokerCfg.ConsumeTopic,
 		container.Config.BrokerCfg.Partition,
-		sarama.OffsetOldest)
+		sarama.OffsetNewest)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Error creating Kafka consumer")
 	}

@@ -11,30 +11,32 @@ type Monitor struct {
 	EmployedWorkers uint
 	FreeWorkers     uint
 	CompletedTasks  uint
+	LastTaskID      uint
 }
 
-func NewMonitor() *Monitor {
+func NewMonitor(agentID int32) *Monitor {
 	return &Monitor{
-		Lock: &sync.RWMutex{},
+		AgentID: agentID,
+		Lock:    &sync.RWMutex{},
 	}
 }
 
 func (m *Monitor) GetStats() *models.Stats {
-	m.Lock.Lock()
-	defer m.Lock.Unlock()
 	return &models.Stats{
-		EmployedWorkers: m.EmployedWorkers,
-		FreeWorkers:     m.FreeWorkers,
-		CompletedTasks:  m.CompletedTasks,
+		//EmployedWorkers: m.EmployedWorkers,
+		//FreeWorkers:     m.FreeWorkers,
+		CompletedTasks: m.CompletedTasks,
+		LastTaskID:     m.LastTaskID,
 	}
 }
 
-func (m *Monitor) CompleteWork() {
+func (m *Monitor) CompleteWork(taskID uint) {
 	m.Lock.RLock()
 	defer m.Lock.RUnlock()
 	m.CompletedTasks++
 	m.FreeWorkers++
 	m.EmployedWorkers--
+	m.LastTaskID = taskID
 }
 
 func (m *Monitor) AddWork() {

@@ -10,6 +10,7 @@ var (
 	ErrTooFewOperands      = errors.New("недостаточно чисел")
 	ErrTooManyOperands     = errors.New("лишние числа")
 	ErrInvalidFloat        = errors.New("неправильное вещественное число")
+	ErrInvalidMessage      = errors.New("неверный формат сообщения (должен быть json)")
 )
 
 func ErrInvalidChar(char rune) error {
