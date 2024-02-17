@@ -11,7 +11,7 @@ import (
 
 func InitMigrations(db *gorm.DB) {
 	var (
-		tasks models.Tasks
+		tasks models.TasksModel
 	)
 	err := db.AutoMigrate(&tasks)
 	if err != nil {

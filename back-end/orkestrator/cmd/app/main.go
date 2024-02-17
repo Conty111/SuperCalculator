@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/Conty111/SuperCalculator/back-end/agent/internal/app/cli"
+	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/app/cli"
 )
 
 func main() {

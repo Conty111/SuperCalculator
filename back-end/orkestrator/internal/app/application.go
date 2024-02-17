@@ -38,7 +38,12 @@ func BuildApplication() (*Application, error) {
 		Config:    cfg,
 		Database:  db,
 	}
-
+	producer := initializers.InitializeProducer(container)
+	container.Producer = producer
+	svc := initializers.InitializeService(container)
+	container.Service = svc
+	consumer := initializers.InitializeConsumer(container)
+	container.Consumer = consumer
 	router := initializers.InitializeRouter(container)
 	server := initializers.InitializeHTTPServer(router, cfg.HTTPConfig)
 
@@ -53,7 +58,8 @@ func (a *Application) Start(ctx context.Context, cli bool) {
 	if cli {
 		return
 	}
-
+	a.Container.Consumer.Start()
+	a.Container.Producer.Start()
 	a.startHTTPServer()
 }
 

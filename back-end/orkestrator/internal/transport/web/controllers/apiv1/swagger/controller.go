@@ -1,7 +1,7 @@
 package swagger
 
 import (
-	"github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/web/controllers/apiv1"
+	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/controllers/apiv1"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"     // swagger embed files
 	ginSwagger "github.com/swaggo/gin-swagger" // gin-swagger middleware
