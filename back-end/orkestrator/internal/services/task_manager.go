@@ -3,7 +3,9 @@ package services
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"github.com/Conty111/SuperCalculator/back-end/models"
+	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/clierrs"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/repository"
 	"github.com/rs/zerolog/log"
 	"io"
@@ -79,11 +81,23 @@ func (tm *TaskManager) SetCalculationSettings(settings *models.CalculationSettin
 // CreateTask creates task in database
 func (tm *TaskManager) CreateTask(expression string) (*models.TasksModel, error) {
 	task := models.TasksModel{Expression: expression}
-	err := tm.Repo.Create(&task)
-	if err != nil {
-		return nil, err
+	t, err := tm.Repo.GetByExpression(expression)
+	if errors.Is(err, clierrs.ErrTaskNotFound) {
+		err = tm.Repo.Create(&task)
+		if err != nil {
+			return nil, err
+		}
+		msg := models.Task{
+			ID:         task.ID,
+			Expression: expression,
+		}
+		tm.ProduceChan <- msg
+		return &task, err
 	}
-	return &task, err
+	if err == nil {
+		return t, clierrs.ErrTaskAlreadyCreated
+	}
+	return nil, err
 }
 
 // GetWorkersInfo gets info from workers in parallel and return their bodys and statuses
