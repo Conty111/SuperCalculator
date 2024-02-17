@@ -25,7 +25,6 @@ type BrokerConfig struct {
 	CommitInterval uint
 	ConsumeTopic   string
 	ProduceTopic   string
-	Partition      int32
 }
 
 type DatabaseConfig struct {
@@ -112,7 +111,7 @@ func getBrokerConf() *BrokerConfig {
 	var cfg = BrokerConfig{}
 	cfg.Brokers = strings.Split(envy.Get("BROKERS", "kafka-broker-broker:9092"), ";")
 	cfg.ProduceTopic = envy.Get("TASKS_TOPIC", "tasks")
-	cfg.ConsumeTopic = envy.Get("RESULTS_TOPIC", "results")
+	cfg.ConsumeTopic = envy.Get("RES_TOPIC", "results")
 	cfg.ConsumerGroup = envy.Get("CONSUMER_GROUP", "orkestrator_group")
 	interval, err := strconv.Atoi(envy.Get("COMMIT_INTERVAL", "1"))
 	if err != nil {

@@ -15,6 +15,5 @@ func InitializeProducer(container *dependencies.Container) *kafka_broker.AppProd
 	return kafka_broker.NewAppProducer(
 		producer,
 		container.Config.BrokerCfg.ProduceTopic,
-		container.Config.BrokerCfg.Partition,
 	)
 }

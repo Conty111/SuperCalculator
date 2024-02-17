@@ -101,6 +101,7 @@ func (ctrl *Controller) HandleTask(ctx *gin.Context) {
 	}
 	task, err := ctrl.Service.CreateTask(body.Expression)
 	if err != nil {
+		helpers.WriteErrResponse(ctx, err)
 		return
 	}
 	var resp struct {

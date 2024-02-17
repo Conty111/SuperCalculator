@@ -17,15 +17,13 @@ type AppProducer struct {
 
 func NewAppProducer(
 	producer sarama.AsyncProducer,
-	topic string,
-	partition int32) *AppProducer {
+	topic string) *AppProducer {
 
 	return &AppProducer{
-		InChan:    make(chan models.Task),
-		Producer:  producer,
-		Done:      make(chan interface{}),
-		Topic:     topic,
-		Partition: partition,
+		InChan:   make(chan models.Task),
+		Producer: producer,
+		Done:     make(chan interface{}),
+		Topic:    topic,
 	}
 }
 
@@ -33,8 +31,7 @@ func (ap *AppProducer) Start() {
 	go func() {
 		var prodMsg sarama.ProducerMessage
 		prodMsg.Topic = ap.Topic
-		prodMsg.Partition = ap.Partition
-		log.Info().Msg("producer are ready to send tasks")
+		log.Info().Msg("producer are ready to send messages")
 		for {
 			select {
 			case <-ap.Done:

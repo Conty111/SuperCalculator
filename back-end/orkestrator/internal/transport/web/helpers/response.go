@@ -1,6 +1,8 @@
 package helpers
 
 import (
+	"errors"
+	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/clierrs"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -20,6 +22,8 @@ type MsgResponse struct {
 func WriteErrResponse(ctx *gin.Context, err error) {
 	var status int
 	switch {
+	case errors.Is(err, clierrs.ErrTaskAlreadyCreated):
+		status = http.StatusBadRequest
 	default:
 		status = http.StatusInternalServerError
 	}
