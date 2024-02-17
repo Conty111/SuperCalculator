@@ -33,14 +33,19 @@ func (ac *AppConsumer) Start() {
 	go func() {
 		partList, err := ac.Consumer.Partitions(ac.Topic)
 		if err != nil {
-			log.Fatal().Err(err).Msg("error to get partitions from topic")
+			log.Fatal().
+				Err(err).
+				Msg("error to get partitions from topic")
 		}
 		wg := sync.WaitGroup{}
 		ctx, cancel := context.WithCancel(context.TODO())
 		for _, part := range partList {
 			pc, err := ac.Consumer.ConsumePartition(ac.Topic, part, sarama.OffsetNewest)
 			if err != nil {
-				log.Fatal().Err(err).Int32("Partition", part).Msg("error creating consumer for partition")
+				log.Fatal().
+					Err(err).
+					Int32("Partition", part).
+					Msg("error creating consumer for partition")
 			}
 			wg.Add(1)
 			go func(pc sarama.PartitionConsumer, ctx context.Context) {
@@ -48,9 +53,11 @@ func (ac *AppConsumer) Start() {
 				for {
 					select {
 					case message := <-pc.Messages():
-						log.Info().Int32("Partition", message.Partition).Msg("got message")
+						log.Info().
+							Int32("Partition", message.Partition).
+							Str("message", string(message.Value)).
+							Msg("got message")
 						res, err := parseMessage(message)
-						log.Debug().Any("message", res).Msg("messaged parsed")
 						if err == nil {
 							err := ac.Service.SaveResult(res)
 							if err != nil {

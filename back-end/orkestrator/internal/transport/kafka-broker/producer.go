@@ -8,7 +8,7 @@ import (
 )
 
 type AppProducer struct {
-	Producer  sarama.AsyncProducer
+	Producer  sarama.SyncProducer
 	Topic     string
 	Partition int32
 	InChan    chan models.Task
@@ -16,7 +16,7 @@ type AppProducer struct {
 }
 
 func NewAppProducer(
-	producer sarama.AsyncProducer,
+	producer sarama.SyncProducer,
 	topic string) *AppProducer {
 
 	return &AppProducer{
@@ -29,8 +29,12 @@ func NewAppProducer(
 
 func (ap *AppProducer) Start() {
 	go func() {
-		var prodMsg sarama.ProducerMessage
-		prodMsg.Topic = ap.Topic
+		defer func(Producer sarama.SyncProducer) {
+			err := Producer.Close()
+			if err != nil {
+				log.Error().Err(err).Msg("Error while closing producer")
+			}
+		}(ap.Producer)
 		log.Info().Msg("producer are ready to send messages")
 		for {
 			select {
@@ -40,10 +44,18 @@ func (ap *AppProducer) Start() {
 				data, err := json.Marshal(msg)
 				if err != nil {
 					log.Error().Err(err).Msg("Error while trying to marshal result")
+					continue
 				}
-				prodMsg.Value = sarama.ByteEncoder(data)
-				log.Info().Str("result", string(data)).Msg("sending result")
-				ap.Producer.Input() <- &prodMsg
+				prodMsg := &sarama.ProducerMessage{
+					Topic: ap.Topic,
+					Value: sarama.ByteEncoder(data),
+				}
+				log.Info().Str("task", string(data)).Msg("sending task")
+				p, _, err := ap.Producer.SendMessage(prodMsg)
+				if err != nil {
+					log.Error().Int32("Partition", p).Str("message", string(data)).Err(err).Msg("Error while sending message")
+					continue
+				}
 			}
 		}
 	}()

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/Conty111/SuperCalculator/back-end/models"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/clierrs"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/repository"
@@ -19,7 +20,9 @@ type TaskManager struct {
 	ProduceChan  chan<- models.Task
 	AgentCount   uint
 	AgentAddress []string
-	timeout      time.Duration
+	timeoutResp  time.Duration
+	cachedTasks  map[uint]interface{}
+	lock         sync.RWMutex
 }
 
 func NewTaskManager(rep *repository.TasksRepository,
@@ -31,23 +34,24 @@ func NewTaskManager(rep *repository.TasksRepository,
 		ProduceChan:  produceCg,
 		AgentCount:   agentCount,
 		AgentAddress: agentAddrs,
-		timeout:      time.Second * 5,
+		timeoutResp:  time.Second * 5,
+		cachedTasks:  make(map[uint]interface{}),
+		lock:         sync.RWMutex{},
 	}
 }
 
 // GetAllTasks returns all tasks in database
 func (tm *TaskManager) GetAllTasks() ([]*models.TasksModel, error) {
-	log.Info().Msg("going to db to get all tasks")
 	return tm.Repo.GetAllTasks()
 }
 
 // SetCalculationSettings sends settings to agents in parallel and returns their responses
 func (tm *TaskManager) SetCalculationSettings(settings *models.CalculationSettings) ([]map[string]interface{}, []int) {
 	if settings.Timeout != 0 {
-		tm.timeout = time.Duration(settings.Timeout) * time.Second
+		tm.timeoutResp = time.Duration(settings.Timeout) * time.Second
 	}
 
-	client := http.Client{Timeout: tm.timeout}
+	client := http.Client{Timeout: tm.timeoutResp}
 	wg := sync.WaitGroup{}
 	wg.Add(int(tm.AgentCount))
 
@@ -65,9 +69,15 @@ func (tm *TaskManager) SetCalculationSettings(settings *models.CalculationSettin
 				statuses[i] = http.StatusInternalServerError
 				return
 			}
-			body, status, err := sendRequestToAgent(&client, bytes.NewReader(reqBody), agentAddr, http.MethodPut)
+			body, status, err := sendRequestToAgent(
+				&client,
+				bytes.NewReader(reqBody),
+				fmt.Sprintf("%s/calculator", agentAddr),
+				http.MethodPut,
+			)
 			if err != nil {
 				statuses[i] = http.StatusInternalServerError
+				return
 			}
 			responseBodys[i] = body
 			statuses[i] = status
@@ -87,6 +97,9 @@ func (tm *TaskManager) CreateTask(expression string) (*models.TasksModel, error)
 		if err != nil {
 			return nil, err
 		}
+		tm.lock.RLock()
+		tm.cachedTasks[task.ID] = expression
+		tm.lock.RUnlock()
 		msg := models.Task{
 			ID:         task.ID,
 			Expression: expression,
@@ -102,22 +115,29 @@ func (tm *TaskManager) CreateTask(expression string) (*models.TasksModel, error)
 
 // GetWorkersInfo gets info from workers in parallel and return their bodys and statuses
 func (tm *TaskManager) GetWorkersInfo() ([]map[string]interface{}, []int) {
-	client := http.Client{Timeout: tm.timeout}
+	client := http.Client{Timeout: tm.timeoutResp}
 	wg := sync.WaitGroup{}
 	wg.Add(int(tm.AgentCount))
 
 	responseBodys := make([]map[string]interface{}, int(tm.AgentCount))
-	statuses := make([]int, int(tm.AgentCount))
+	statuses := make([]int, len(tm.AgentAddress))
 
 	for i, agentAddr := range tm.AgentAddress {
 		agentAddr := agentAddr
 		i := i
 		go func() {
 			defer wg.Done()
-			body, status, err := sendRequestToAgent(&client, nil, agentAddr, http.MethodGet)
+			body, status, err := sendRequestToAgent(
+				&client,
+				nil,
+				fmt.Sprintf("%s/status", agentAddr),
+				http.MethodGet,
+			)
 			if err != nil {
 				statuses[i] = http.StatusInternalServerError
+				return
 			}
+			log.Print(body, statuses, err)
 			responseBodys[i] = body
 			statuses[i] = status
 		}()
@@ -143,6 +163,9 @@ func (tm *TaskManager) DeleteTaskByExpression(expression string) error {
 
 // SaveResult saves (updates) result in database
 func (tm *TaskManager) SaveResult(res *models.Result) error {
+	tm.lock.RLock()
+	delete(tm.cachedTasks, res.ID)
+	tm.lock.RUnlock()
 	t, err := tm.Repo.GetByID(res.ID)
 	if err != nil {
 		return err
@@ -155,6 +178,17 @@ func (tm *TaskManager) SaveResult(res *models.Result) error {
 	return tm.Repo.Update(t, fields)
 }
 
+func (tm *TaskManager) GetCachedTasksIDs() []uint {
+	tm.lock.Lock()
+	defer tm.lock.Unlock()
+	keys := make([]uint, len(tm.cachedTasks))
+	var i int
+	for k, _ := range tm.cachedTasks {
+		keys[i] = k
+	}
+	return keys
+}
+
 // sendRequestToAgent sends request and returns body and status
 func sendRequestToAgent(
 	client *http.Client,
@@ -162,7 +196,7 @@ func sendRequestToAgent(
 	agentAddr string,
 	method string) (map[string]interface{}, int, error) {
 	body := make(map[string]interface{})
-	req, err := http.NewRequest(method, agentAddr, reqBody)
+	req, err := http.NewRequest(method, fmt.Sprintf("http://%s", agentAddr), reqBody)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create request")
 		return nil, 0, err
