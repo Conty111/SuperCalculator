@@ -7,7 +7,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Conty111/SuperCalculator/back-end/agent/internal/app"
+	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/app"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )

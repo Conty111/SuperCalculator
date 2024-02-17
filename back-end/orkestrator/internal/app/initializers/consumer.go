@@ -8,17 +8,12 @@ import (
 )
 
 func InitializeConsumer(container *dependencies.Container) *kafka_broker.AppConsumer {
-	consumer, err := sarama.NewConsumer(container.Config.BrokerCfg.Brokers, container.Config.BrokerCfg.SaramaCfg)
+	con, err := sarama.NewConsumer(
+		container.Config.BrokerCfg.Brokers,
+		container.Config.BrokerCfg.SaramaCfg)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Error creating Kafka consumer")
+		log.Fatal().Err(err).Msg("Error creating Kafka consumer group")
 	}
-	con, err := consumer.ConsumePartition(
-		container.Config.BrokerCfg.ConsumeTopic,
-		container.Config.BrokerCfg.Partition,
-		sarama.OffsetOldest)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Error creating Kafka consumer")
-	}
-	log.Info().Str("Partition", string(container.Config.BrokerCfg.Partition)).Msg("started consumer")
-	return kafka_broker.NewAppConsumer(container.ExpressionSvc, con, container.Monitor)
+	log.Info().Msg("initialized consumer")
+	return kafka_broker.NewAppConsumer(container.Service, con, container.Config.BrokerCfg.ConsumeTopic)
 }
