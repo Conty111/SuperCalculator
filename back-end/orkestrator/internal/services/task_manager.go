@@ -2,6 +2,7 @@ package services
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,8 +19,8 @@ import (
 type TaskManager struct {
 	Repo         *repository.TasksRepository
 	ProduceChan  chan<- models.Task
-	AgentCount   uint
 	AgentAddress []string
+	timeRetry    time.Duration
 	timeoutResp  time.Duration
 	cachedTasks  map[uint]interface{}
 	lock         sync.RWMutex
@@ -27,14 +28,15 @@ type TaskManager struct {
 
 func NewTaskManager(rep *repository.TasksRepository,
 	produceCg chan<- models.Task,
-	agentCount uint,
-	agentAddrs []string) *TaskManager {
+	agentAddrs []string,
+	timeoutResponse time.Duration,
+	timeRetry time.Duration) *TaskManager {
 	return &TaskManager{
 		Repo:         rep,
 		ProduceChan:  produceCg,
-		AgentCount:   agentCount,
 		AgentAddress: agentAddrs,
-		timeoutResp:  time.Second * 5,
+		timeoutResp:  timeoutResponse,
+		timeRetry:    timeRetry,
 		cachedTasks:  make(map[uint]interface{}),
 		lock:         sync.RWMutex{},
 	}
@@ -45,18 +47,21 @@ func (tm *TaskManager) GetAllTasks() ([]*models.TasksModel, error) {
 	return tm.Repo.GetAllTasks()
 }
 
-// SetCalculationSettings sends settings to agents in parallel and returns their responses
-func (tm *TaskManager) SetCalculationSettings(settings *models.CalculationSettings) ([]map[string]interface{}, []int) {
-	if settings.Timeout != 0 {
-		tm.timeoutResp = time.Duration(settings.Timeout) * time.Second
+// SetSettings set settings on orchestrator and sends settings to agents in parallel, returns their responses
+func (tm *TaskManager) SetSettings(settings *models.Settings) ([]map[string]interface{}, []int) {
+	if settings.TimeoutResponse != 0 {
+		tm.lock.RLock()
+		tm.timeoutResp = time.Duration(settings.TimeoutResponse) * time.Second
+		tm.timeRetry = time.Duration(settings.TimeToRetry)
+		tm.lock.RUnlock()
 	}
 
 	client := http.Client{Timeout: tm.timeoutResp}
 	wg := sync.WaitGroup{}
-	wg.Add(int(tm.AgentCount))
+	wg.Add(len(tm.AgentAddress))
 
-	responseBodys := make([]map[string]interface{}, int(tm.AgentCount))
-	statuses := make([]int, int(tm.AgentCount))
+	responseBodys := make([]map[string]interface{}, len(tm.AgentAddress))
+	statuses := make([]int, len(tm.AgentAddress))
 
 	for i, agentAddr := range tm.AgentAddress {
 		agentAddr := agentAddr
@@ -117,9 +122,9 @@ func (tm *TaskManager) CreateTask(expression string) (*models.TasksModel, error)
 func (tm *TaskManager) GetWorkersInfo() ([]map[string]interface{}, []int) {
 	client := http.Client{Timeout: tm.timeoutResp}
 	wg := sync.WaitGroup{}
-	wg.Add(int(tm.AgentCount))
+	wg.Add(len(tm.AgentAddress))
 
-	responseBodys := make([]map[string]interface{}, int(tm.AgentCount))
+	responseBodys := make([]map[string]interface{}, len(tm.AgentAddress))
 	statuses := make([]int, len(tm.AgentAddress))
 
 	for i, agentAddr := range tm.AgentAddress {
@@ -178,7 +183,25 @@ func (tm *TaskManager) SaveResult(res *models.Result) error {
 	return tm.Repo.Update(t, fields)
 }
 
-func (tm *TaskManager) GetCachedTasksIDs() []uint {
+func (tm *TaskManager) EnableRetrying(ctx context.Context) {
+	go func() {
+		for {
+			tm.lock.Lock()
+			t := tm.timeRetry
+			tm.lock.Unlock()
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				tm.RetryTasks()
+			}
+			time.Sleep(t)
+		}
+	}()
+}
+
+// getCachedTasksIDs returns slice of current not completed tasks
+func (tm *TaskManager) getCachedTasksIDs() []uint {
 	tm.lock.Lock()
 	defer tm.lock.Unlock()
 	keys := make([]uint, len(tm.cachedTasks))
@@ -187,6 +210,26 @@ func (tm *TaskManager) GetCachedTasksIDs() []uint {
 		keys[i] = k
 	}
 	return keys
+}
+
+// RetryTasks sends tasks in queue again if they aren't updated yet
+func (tm *TaskManager) RetryTasks() {
+	ids := tm.getCachedTasksIDs()
+	if len(ids) > 0 {
+		log.Debug().Any("taskIDs", ids).Msg("retrying")
+		for _, id := range ids {
+			t, err := tm.Repo.GetByID(id)
+			if err != nil {
+				log.Error().Err(err).Msg("failed get task by id")
+				continue
+			}
+			task := models.Task{
+				ID:         id,
+				Expression: t.Expression,
+			}
+			tm.ProduceChan <- task
+		}
+	}
 }
 
 // sendRequestToAgent sends request and returns body and status

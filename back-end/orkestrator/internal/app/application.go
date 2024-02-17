@@ -60,11 +60,14 @@ func (a *Application) Start(ctx context.Context, cli bool) {
 	}
 	a.Container.Consumer.Start()
 	a.Container.Producer.Start()
+	a.Container.Service.EnableRetrying(ctx)
 	a.startHTTPServer()
 }
 
 // Stop stops application services
 func (a *Application) Stop() (err error) {
+	a.Container.Consumer.Stop()
+	a.Container.Producer.Stop()
 	return a.httpServer.Shutdown(context.TODO())
 }
 

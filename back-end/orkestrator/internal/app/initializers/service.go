@@ -12,7 +12,8 @@ func InitializeService(container *dependencies.Container) interfaces.Service {
 	return services.NewTaskManager(
 		rep,
 		container.Producer.InChan,
-		container.Config.App.AgentCount,
 		container.Config.HTTPConfig.AgentAddresses,
+		container.Config.App.TimeoutResponse,
+		container.Config.App.TimeToRetry,
 	)
 }
