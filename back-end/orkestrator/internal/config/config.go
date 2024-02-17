@@ -65,15 +65,23 @@ func GetConfig() *Configuration {
 
 func getFromEnv() *Configuration {
 	var cfg = &Configuration{}
+
 	globalEnvPath := envy.Get("GLOBAL_ENV", "../../.env")
 	err := envy.Load(globalEnvPath)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to load global env")
 	}
+
 	cfg.App = getAppConf()
 	cfg.DB = getDBConfig()
 	cfg.HTTPConfig = getWebConf()
 	cfg.BrokerCfg = getBrokerConf()
+	if cfg.App.AgentCount != uint(len(cfg.HTTPConfig.AgentAddresses)) {
+		log.Fatal().
+			Uint("AgentsCount", cfg.App.AgentCount).
+			Any("AgentsAddresses", cfg.HTTPConfig.AgentAddresses).
+			Msg("count of agents not equal len of agent addresses")
+	}
 
 	return cfg
 }
@@ -98,7 +106,7 @@ func getAppConf() *App {
 	var cfg = App{}
 
 	cfg.LoggerCfg = gin.LoggerConfig{}
-	agentCount, err := strconv.Atoi(envy.Get("AGENT_COUNT", "1"))
+	agentCount, err := strconv.Atoi(envy.Get("COUNT_AGENTS", "1"))
 	if err != nil {
 		log.Fatal().Err(err).Msg("error getting AGENT_COUNT")
 	}
@@ -133,7 +141,7 @@ func getWebConf() *HTTPConfig {
 
 	cfg.Host = envy.Get("HTTP_SERVER_HOST", "0.0.0.0")
 	cfg.Port = envy.Get("HTTP_SERVER_PORT", "8000")
-	hosts := envy.Get("HTTP_AGENT_ADDRESSES", "localhost")
+	hosts := envy.Get("HTTP_AGENT_ADDRESSES", "localhost:8001")
 	cfg.AgentAddresses = strings.Split(hosts, ";")
 
 	return &cfg

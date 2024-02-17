@@ -6,7 +6,6 @@ import (
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/controllers/apiv1"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/helpers"
 	"github.com/gin-gonic/gin"
-
 	"net/http"
 )
 
@@ -71,13 +70,13 @@ func (ctrl *Controller) GetTasks(ctx *gin.Context) {
 	}
 	results := make([]*Task, len(tasks))
 	for i, t := range tasks {
-		var res *Task
+		var res Task
 		res.ID = t.ID
 		res.Expression = t.Expression
 		res.IsExecuted = t.IsExecuted
 		res.Error = t.Error
 		res.Value = t.Value
-		results[i] = res
+		results[i] = &res
 	}
 	ctx.JSON(http.StatusOK, &TasksListResponse{
 		Status: http.StatusText(http.StatusOK),
