@@ -69,9 +69,9 @@ front-end часть в проекте отсутствует.
 
 Чтобы просто запустить систему, нужны Go v1.21.6 (и выше) и Docker вместе с docker-compose
 
+Также необходимо создать файл БД back-end/db/test.db
 
 1. Установить зависимости``go mod tidy``
-2. Создать директорию db, а в ней файл test.db (можно и в другом месте с другим названием, только не забудьте поменять в .env путь)
 
 ### On Mac/Linux
 
@@ -82,7 +82,7 @@ front-end часть в проекте отсутствует.
 ### On Windows
 
 ```
-Powershell скрипт
+.\run_local.ps1
 ```
 
 ## How to use
@@ -117,7 +117,7 @@ Create task
 curl -L 'http://localhost:8000/api/v1/manager' \
 -H 'Content-Type: application/json' \
 -d '{
-    "expression": "11+11+11+21111/0"
+    "expression": "11+11+11"
 }'
 ```
 Get all tasks
@@ -129,7 +129,8 @@ Set settings (operation time in millisecond, timeout and time retry in seconds)
 curl -L -X PUT 'http://localhost:8000/api/v1/manager/settings' \
 -H 'Content-Type: application/json' \
 -d '{
-    "time_retry": 1,
+    "timeout_response": 10,
+    "time_retry": 10,
     "add_time": 5000,
     "division_time": 6000,
     "subtract_time": 10,
