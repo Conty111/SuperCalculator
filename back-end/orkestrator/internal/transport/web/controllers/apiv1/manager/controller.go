@@ -1,7 +1,9 @@
 package manager
 
 import (
+	"errors"
 	"github.com/Conty111/SuperCalculator/back-end/models"
+	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/clierrs"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/interfaces"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/controllers/apiv1"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/helpers"
@@ -102,6 +104,19 @@ func (ctrl *Controller) HandleTask(ctx *gin.Context) {
 	}
 	task, err := ctrl.Service.CreateTask(body.Expression)
 	if err != nil {
+		if errors.Is(err, clierrs.ErrTaskAlreadyCreated) {
+			var resp struct {
+				Response
+				models.TasksModel
+			}
+			resp.Response = Response{
+				Status:  http.StatusText(http.StatusOK),
+				Message: "task already existed",
+			}
+			resp.TasksModel = *task
+			ctx.JSON(http.StatusOK, &resp)
+			return
+		}
 		helpers.WriteErrResponse(ctx, err)
 		return
 	}

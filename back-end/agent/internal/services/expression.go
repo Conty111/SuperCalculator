@@ -15,7 +15,7 @@ import (
 )
 
 type ExpressionService struct {
-	Locker          *sync.Mutex
+	Locker          *sync.RWMutex
 	AddTime         time.Duration
 	MultiplyTime    time.Duration
 	DivisionTime    time.Duration
@@ -25,7 +25,7 @@ type ExpressionService struct {
 
 func NewExpressionService() *ExpressionService {
 	return &ExpressionService{
-		Locker: &sync.Mutex{},
+		Locker: &sync.RWMutex{},
 		chars:  []rune{'+', '-', '*', '/', '(', ')', '^', '.'},
 	}
 }
@@ -59,8 +59,8 @@ func (es *ExpressionService) Proccess(msg *sarama.ConsumerMessage) *models.Resul
 }
 
 func (es *ExpressionService) SetOperationDuration(settings *models.DurationSettings) {
-	es.Locker.Lock()
-	defer es.Locker.Unlock()
+	es.Locker.RLock()
+	defer es.Locker.RUnlock()
 	es.DivisionTime = time.Millisecond * time.Duration(settings.DivisionDuration)
 	es.MultiplyTime = time.Millisecond * time.Duration(settings.MultiplyDuration)
 	es.SubtractionTime = time.Millisecond * time.Duration(settings.SubtractDuration)
@@ -122,6 +122,7 @@ func (es *ExpressionService) delay(expr string) {
 				time.Sleep(es.SubtractionTime)
 			}
 		case '+':
+			log.Debug().Dur("dur", es.AddTime).Msg("sleep")
 			time.Sleep(es.AddTime)
 		case '*':
 			time.Sleep(es.MultiplyTime)

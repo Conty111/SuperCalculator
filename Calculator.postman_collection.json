@@ -90,7 +90,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"time_retry\": 1,\n    \"add_time\": 5000,\n    \"division_time\": 6000,\n    \"subtract_time\": 10,\n    \"multiply_time\": 5\n}",
+							"raw": "{\n    \"time_retry\": 1,\n    \"timeout_response\": 2,\n    \"add_time\": 5000,\n    \"division_time\": 6000,\n    \"subtract_time\": 10,\n    \"multiply_time\": 5\n}",
 							"options": {
 								"raw": {
 									"language": "json"

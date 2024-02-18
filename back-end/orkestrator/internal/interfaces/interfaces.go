@@ -13,5 +13,5 @@ type Service interface {
 	DeleteTaskByID(taskID uint) error
 	DeleteTaskByExpression(expression string) error
 	SaveResult(res *models.Result) error
-	EnableRetrying(ctx context.Context)
+	Start(ctx context.Context)
 }

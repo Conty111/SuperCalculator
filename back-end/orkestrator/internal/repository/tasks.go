@@ -16,6 +16,12 @@ func NewTasksRepository(db *gorm.DB) *TasksRepository {
 	}
 }
 
+func (tr *TasksRepository) GetNotExecutedTasks() ([]*models.TasksModel, error) {
+	var tasks []*models.TasksModel
+	r := tr.Database.Model(models.TasksModel{}).Where("is_executed = ?", false).Find(&tasks)
+	return tasks, r.Error
+}
+
 func (tr *TasksRepository) GetAllTasks() ([]*models.TasksModel, error) {
 	var tasks []*models.TasksModel
 	r := tr.Database.Model(models.TasksModel{}).Find(&tasks)

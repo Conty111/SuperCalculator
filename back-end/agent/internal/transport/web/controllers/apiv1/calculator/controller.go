@@ -1,12 +1,14 @@
 package calculator
 
 import (
+	"encoding/json"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/services"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/web/controllers/apiv1"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/web/helpers"
 	"github.com/Conty111/SuperCalculator/back-end/models"
 	"github.com/gin-gonic/gin"
-
+	"github.com/rs/zerolog/log"
+	"io"
 	"net/http"
 )
 
@@ -44,7 +46,15 @@ func (ctrl *Controller) GetRelativePath() string {
 // @Router /api/v1/calculator [put]
 func (ctrl *Controller) SetTime(ctx *gin.Context) {
 	var body models.DurationSettings
-	if err := ctx.ShouldBind(&body); err != nil {
+	data, _ := io.ReadAll(ctx.Request.Body)
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Error().Err(err).Msg("incorrect closing request body")
+		}
+	}(ctx.Request.Body)
+	err := json.Unmarshal(data, &body)
+	if err != nil {
 		helpers.WriteErrResponse(ctx, err)
 		return
 	}
