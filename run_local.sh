@@ -10,6 +10,7 @@ stop_processes() {
 # Обработчик сигнала SIGINT (Ctrl+C)
 trap 'stop_processes; exit 130' INT
 
+cp .env.example .env
 source .env
 export $(grep -v '^' .env | xargs)
 
