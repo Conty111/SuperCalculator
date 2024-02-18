@@ -1,60 +1,141 @@
 # SuperCalculator
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Go Report Card](https://goreportcard.com/badge/github.com/wajox/gobase)](https://goreportcard.com/report/github.com/wajox/gobase)
-[![codecov](https://codecov.io/gh/wajox/gobase/branch/master/graph/badge.svg?token=0K79C2LH2K)](https://codecov.io/gh/wajox/gobase)
-[![Build Status](https://travis-ci.org/wajox/gobase.svg?branch=master)](https://travis-ci.org/wajox/gobase)
-[![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)
+SuperCalculator - проект, имитирующий отказоустойчивый
+механизм орекстрации трафика/задач/сообщений между сущностями, 
+которые вычисляют и выполняют эти задачи. Имитация происходит за счёт
+вычисления математических выражений
 
-This is a simple skeleton for golang application. Inspired by development experience and updated according to github.com/golang-standards/project-layout.
+## Schema
+Проект имеет следующую структуру:
 
-## How to use?
+![img.png](img.png)
 
+front-end часть в проекте отсутствует.
 
+## Description
+
+**Есть 4 вида запросов:**
+1. Получить информацию по задачам
+2. Установить время выполнения каждой операции, 
+а также время ожидания для запросов и выполнения задания
+3. Получить информацию о состоянии агентов
+4. Создать новую задачу
+
+За счет сохранения всех задач в БД, 
+при отказе любого из компонентов задача не потеряется и останется в БД.
+
+После создания задачи, она отправляется на брокер в tasks очередь в формате JSON. 
+Из этой очереди агенты забирают задачи, вычисляют и отправляют обратно в очередь results.
+
+Как только оркестратор получает результат, он сохраняет его в БД и помечает как выполненную. 
+При этом, у оркестратора есть механизм повторной отправки задач, если результат задач не пришел спустя какое-то время
+
+Мониторинг агентов (а также их настройка) осуществлен простым HTTP запросом с таймаутом.
 
 ## Structure
 
-* /front-end - 
-* /back-end -
-  * /agent
-  * /orkestrator
-
-## Commands
-```sh
-# install dev tools(wire, golangci-lint, swag, ginkgo)
-make install-tools
-
-# start test environment from docker-compose.yml-test.yml
-make start-docker-compose.yml-test
-
-# stop test environment from docker-compose.yml-test.yml
-make stop-docker-compose.yml-test
-
-# run all tests
-make test-all
-
-# run go generate
-make gen
-
-# generate source code from .proto files
-make proto
-
-# generate dependencies with wire
-make deps
+```
+├── back-end
+│ ├── agent - исходники агента
+│ │ ├── api - сюда должна генерироваться документация
+│ │ ├── cmd - точка входа
+│ │ ├── internal
+│ │ │ ├── agent_errors - кастомные внутренние ошибки
+│ │ │ ├── app - инициализация и сборка приложения
+│ │ │ ├── config - конфигурация агента
+│ │ │ ├── services - слой сервиса
+│ │ │ └── transport - слой транспорта (rest, kafka)
+│ ├── db - папка с файлом БД для sqlite3
+│ ├── models - общие модели сообщений и таблиц БД
+│ └── orkestrator - исходники для оркестратора
+│     ├── api - сюда должна складываться документация по api
+│     ├── cmd - точка входа
+│     ├── internal
+│     │ ├── app - инициализация и сборка приложения
+│     │ ├── clierrs - кастомные клиентские ошибки
+│     │ ├── config - конфигурация
+│     │ ├── interfaces - интерфейсы для соединения слоев
+│     │ ├── repository - слой данных (хранилища)
+│     │ ├── services - слой сервиса и бизнес логики
+│     │ └── transport - транспортный слой (rest, kafka broker)
+└── front-end - здесь должен был быть фронт((
 ```
 
+В .env файле можно редактировать некоторые настройки системы
 
-## Tools and packages
-* gin-gonic
-* ginkgo with gomega
-* spf13/viper
-* spf13/cobra
-* envy
-* zerolog
-* golangci-lint
-* wire
-* swag
-* migrate
-* protoc
-* jsonapi
-* docker with docker-compose
+## Quick start 
+
+Для качественного просмотра работы системы, рекомендую пропустить этот пункт и спуститься ниже. Однако, для простого запуска, хватит и этого
+
+Чтобы просто запустить систему, нужны Go и Docker вместе с docker-compose
+
+
+1. Установить зависимости``go mod tidy``
+
+### On Mac/Linux
+
+```
+./run_local.sh
+```
+
+### On Windows
+
+```
+Powershell скрипт
+```
+
+## How to use
+
+В .env COUNT_AGENTS по сути означает максимальное кол-во агентов, которое можно будет запустить. 
+Также можно указать адреса для каждого из агентов через ;
+
+1. Установить зависимости
+```
+go mod tidy
+```
+2. Запустить kafka брокер
+```
+docker-compose -f docker-compose-kafka.yml -d
+```
+3. Запустить оркестратор
+```
+go run -v ./back-end/orkestrator/cmd/app/main.go serve
+```
+4. Запустить агенты (в отдельных терминалах)
+```
+go run -v ./back-end/agent/cmd/app/main.go s --http_port <порт из .env файла> --agent_id <id от 0 до макс. кол-во агентов>
+```
+
+## Requests
+
+Если вы пользуетесь Postman, то можете импортировать коллекцию Calculator.postman_collection.json
+
+### Curl requests
+Create task
+```
+curl -L 'http://localhost:8000/api/v1/manager' \
+-H 'Content-Type: application/json' \
+-d '{
+    "expression": "11+11+11+21111/0"
+}'
+```
+Get all tasks
+```
+curl -L 'http://localhost:8000/api/v1/manager/tasks'
+```
+Set settings (operation time in millisecond, timeout and time retry in seconds)
+```
+curl -L -X PUT 'http://localhost:8000/api/v1/manager/settings' \
+-H 'Content-Type: application/json' \
+-d '{
+    "time_retry": 1,
+    "add_time": 5000,
+    "division_time": 6000,
+    "subtract_time": 10,
+    "multiply_time": 5
+}'
+```
+Get workers info
+```
+curl -L 'http://localhost:8000/api/v1/manager/workers'
+```

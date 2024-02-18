@@ -51,11 +51,6 @@ func GetConfig() *Configuration {
 func getFromEnv() *Configuration {
 	var cfg = &Configuration{}
 
-	globalEnv := envy.Get("GLOBAL_ENV", "../../.env")
-	err := envy.Load(globalEnv)
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed to load global env")
-	}
 	cfg.App = getAppConf()
 	cfg.HTTPConfig = getWebConf()
 	cfg.BrokerCfg = getConsumerConf()
@@ -96,7 +91,7 @@ func getWebConf() HTTPConfig {
 	var cfg = HTTPConfig{}
 
 	cfg.Host = envy.Get("HTTP_SERVER_HOST", "0.0.0.0")
-	cfg.Port = envy.Get("HTTP_SERVER_PORT", "8000")
+	//cfg.Port = envy.Get("HTTP_SERVER_PORT", "8000")
 
 	return cfg
 }
