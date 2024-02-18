@@ -15,6 +15,8 @@ import (
 
 // NewServeCmd starts new application instance
 func NewServeCmd() *cobra.Command {
+	var http_port uint
+	var agent_id uint
 	command := &cobra.Command{
 		Use:     "serve",
 		Aliases: []string{"s"},
@@ -57,7 +59,11 @@ func NewServeCmd() *cobra.Command {
 			log.Info().Msg("Finished")
 		},
 	}
-	command.PersistentFlags().Uint("agent_id", 0, "equal to number of partition which should be used by consumer")
-	command.PersistentFlags().Uint("http_port", 8000, "http server port")
+	command.Flags().UintVar(&agent_id, "agent_id", 0, "equal to number of partition which should be used by consumer")
+	command.Flags().UintVar(&http_port, "http_port", 0, "http agent server port")
+	err := command.MarkFlagRequired("http_port")
+	if err != nil {
+		log.Fatal().Err(err)
+	}
 	return command
 }

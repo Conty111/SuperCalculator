@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 
@@ -15,6 +14,8 @@ import (
 
 // NewServeCmd starts new application instance
 func NewServeCmd() *cobra.Command {
+	var local bool
+	var count_agents uint
 	command := &cobra.Command{
 		Use:     "serve",
 		Aliases: []string{"s"},
@@ -28,16 +29,8 @@ func NewServeCmd() *cobra.Command {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
-			l, err := cmd.Flags().GetString("local")
-			if err != nil {
-				log.Fatal().Err(err).Msg("failed to get local flag")
-			}
-			ctx = context.WithValue(ctx, "local", l)
-			http_port, err := cmd.Flags().GetUint("http_base_port")
-			if err != nil {
-				log.Fatal().Err(err).Msg("failed to get http_base_port flags value")
-			}
-			ctx = context.WithValue(ctx, "http_base_port", strconv.Itoa(int(http_port)))
+			ctx = context.WithValue(ctx, "local", local)
+			ctx = context.WithValue(ctx, "agents_count", count_agents)
 
 			application, err := app.InitializeApplication(ctx)
 
@@ -57,7 +50,7 @@ func NewServeCmd() *cobra.Command {
 			log.Info().Msg("Finished")
 		},
 	}
-	command.Flags().String("local", "", "runs orchestrator with local addresses")
-	command.Flags().Uint("http_base_port", 8000, "http base server port for local running")
+	command.Flags().BoolVar(&local, "local", false, "runs orchestrator with local agent addresses")
+	command.Flags().UintVar(&count_agents, "count_agents", 2, "set count of agents for local running")
 	return command
 }

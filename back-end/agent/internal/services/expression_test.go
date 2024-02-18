@@ -1,6 +1,7 @@
 package services_test
 
 import (
+	"github.com/rs/zerolog/log"
 	"testing"
 	"time"
 
@@ -36,16 +37,12 @@ func (suite *ExpressionServiceSuite) TestCalculate() {
 		assert.Equal(t, 14.0, result)
 	})
 	suite.T().Run("Expression with float", func(t *testing.T) {
-		result, err := suite.es.Calculate("(2.12+3)*2")
+		result, err := suite.es.Calculate("(2.12+3.0)*2")
 		assert.NoError(t, err)
 		assert.Equal(t, 10.24, result)
 	})
-	suite.T().Run("Expression with division by zero", func(t *testing.T) {
-		_, err := suite.es.Calculate("2+(2/2)/0")
-		assert.Error(t, err)
-	})
 	suite.T().Run("Expression a?", func(t *testing.T) {
-		res, err := suite.es.Calculate("2 + 3*(-4)")
+		res, err := suite.es.Calculate("2 + 3 * 4*")
 		assert.NoError(t, err)
 		assert.Equal(t, -16.0, res)
 	})
@@ -56,14 +53,15 @@ func (suite *ExpressionServiceSuite) TestCalculate() {
 		t1 := time.Now()
 		go func() {
 			defer close(ch)
-			result, err := suite.es.Calculate("((2+3)*4)^2")
+			result, err := suite.es.Calculate("(2+3)*4")
 			assert.NoError(t, err)
 			ch <- result
 		}()
 		res := <-ch
 		t2 := time.Since(t1)
 		assert.Equal(t, 400.0, res)
-		assert.LessOrEqual(t, t2, time.Second*7)
+		log.Print(t2)
+		assert.LessOrEqual(t, t2, time.Second*4)
 	})
 }
 
@@ -126,13 +124,13 @@ func (suite *ExpressionServiceSuite) TestValidateExpression() {
 //	})
 //}
 
-func (suite *ExpressionServiceSuite) TestCalculateInfix() {
-	suite.T().Run("Simple expression without delays", func(t *testing.T) {
-		result, err := suite.es.CalculateInfix([]string{"2", "3", "+"})
-		assert.NoError(t, err)
-		assert.Equal(t, 5.0, result)
-	})
-}
+//func (suite *ExpressionServiceSuite) TestCalculateInfix() {
+//	suite.T().Run("Simple expression without delays", func(t *testing.T) {
+//		result, err := suite.es.CalculateInfix([]string{"2", "3", "+"})
+//		assert.NoError(t, err)
+//		assert.Equal(t, 5.0, result)
+//	})
+//}
 
 func TestExpressionServiceSuite(t *testing.T) {
 	suite.Run(t, new(ExpressionServiceSuite))

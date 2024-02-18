@@ -22,7 +22,7 @@ func InitMigrations(db *gorm.DB) {
 func InitializeDatabase(dbDSN string) *gorm.DB {
 	db, err := gorm.Open(sqlite.Open(dbDSN), &gorm.Config{})
 	if err != nil {
-		log.Fatal().Err(err).Msg("Cannot connect to the database")
+		log.Fatal().Err(err).Str("path", dbDSN).Msg("Cannot connect to the database")
 	}
 
 	InitMigrations(db)

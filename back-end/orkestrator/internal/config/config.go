@@ -60,14 +60,20 @@ func GetConfig(ctx context.Context) *Configuration {
 	}
 
 	cfg := getFromEnv()
-	l := ctx.Value("local").(string)
-	if l != "" {
-		base_port := int(ctx.Value("http_base_port").(uint))
-		//agents_count := int(ctx.Value("agents_count").(uint))
-		cfg.HTTPConfig.Port = strconv.Itoa(base_port)
-		//for i := base_port; i < base_port+agents_count; i++ {
-		//
-		//}
+	local := ctx.Value("local").(bool)
+	if local {
+		base_port, err := strconv.Atoi(cfg.HTTPConfig.Port)
+		if err != nil {
+			log.Fatal().Err(err).Msg("error while converting http port")
+		}
+		agents_count := ctx.Value("agents_count").(uint)
+		addresses := make([]string, agents_count)
+		var i int
+		for port := uint(base_port) + 1; port < uint(base_port)+agents_count+1; port++ {
+			addresses[i] = fmt.Sprintf("localhost:%d/api/v1", port)
+			i++
+		}
+		cfg.HTTPConfig.AgentAddresses = addresses
 	}
 	config = cfg
 
@@ -76,12 +82,6 @@ func GetConfig(ctx context.Context) *Configuration {
 
 func getFromEnv() *Configuration {
 	var cfg = &Configuration{}
-
-	globalEnvPath := envy.Get("GLOBAL_ENV", "../../.env")
-	err := envy.Load(globalEnvPath)
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed to load global env")
-	}
 
 	cfg.App = getAppConf()
 	cfg.DB = getDBConfig()
