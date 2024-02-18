@@ -3,7 +3,7 @@
 # Функция для остановки всех запущенных процессов
 stop_processes() {
   # Останавливаем все запущенные процессы
-  docker-compose -f docker-compose-kafka.yml down
+  docker compose -f docker-compose-kafka.yml down
   pkill -P $$
 }
 
@@ -15,7 +15,7 @@ source .env
 export $(grep -v '^' .env | xargs)
 
 # Запуск Kafka и приложения
-docker-compose -f docker-compose-kafka.yml up -d
+docker compose -f docker-compose-kafka.yml up -d
 
 # Ожидание запуска Kafka и приложения
 sleep 5

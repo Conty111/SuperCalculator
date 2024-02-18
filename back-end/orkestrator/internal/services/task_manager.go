@@ -42,6 +42,25 @@ func NewTaskManager(rep *repository.TasksRepository,
 	}
 }
 
+// Start initing service (sends not executed tasks from db and enbales retrying)
+func (tm *TaskManager) Start(ctx context.Context) {
+	tasks, err := tm.Repo.GetNotExecutedTasks()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get not executed tasks")
+	}
+	tm.EnableRetrying(ctx)
+	for _, t := range tasks {
+		task := models.Task{
+			ID:         t.ID,
+			Expression: t.Expression,
+		}
+		tm.ProduceChan <- task
+		tm.lock.RLock()
+		tm.cachedTasks[task.ID] = task
+		tm.lock.RUnlock()
+	}
+}
+
 // GetAllTasks returns all tasks in database
 func (tm *TaskManager) GetAllTasks() ([]*models.TasksModel, error) {
 	return tm.Repo.GetAllTasks()
@@ -52,7 +71,7 @@ func (tm *TaskManager) SetSettings(settings *models.Settings) ([]map[string]inte
 	if settings.TimeoutResponse != 0 {
 		tm.lock.RLock()
 		tm.timeoutResp = time.Duration(settings.TimeoutResponse) * time.Second
-		tm.timeRetry = time.Duration(settings.TimeToRetry)
+		tm.timeRetry = time.Duration(settings.TimeToRetry) * time.Second
 		tm.lock.RUnlock()
 	}
 
