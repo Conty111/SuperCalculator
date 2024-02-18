@@ -70,18 +70,11 @@ func (es *ExpressionService) SetOperationDuration(settings *models.DurationSetti
 }
 
 func (es *ExpressionService) Calculate(expression string) (float64, error) {
-	operands, operators, err := es.ParseToInfix(expression)
+	infixForm := es.ToInfix(expression)
+	result, err := es.CalculateInfix(infixForm)
 	if err != nil {
 		return 0, err
 	}
-
-	if len(operators) < len(operands)-1 {
-		return 0, agent_errors.ErrTooManyOperands
-	} else if len(operators) > len(operands)-1 {
-		return 0, agent_errors.ErrTooFewOperands
-	}
-
-	result := es.CalculateInfix(operands, operators)
 	return result, nil
 }
 
@@ -105,7 +98,11 @@ func (es *ExpressionService) ValidateExpression(expression string) (string, erro
 	for i, char := range expression {
 		if char == '.' {
 			// Проверяем, что точка не является первым или последним символом, и перед и после точки есть цифры
-			if i == 0 || i == len(expression)-1 || !unicode.IsDigit(rune(expression[i-1])) || !unicode.IsDigit(rune(expression[i+1])) {
+			if i == 0 ||
+				i == len(expression)-1 ||
+				!unicode.IsDigit(rune(expression[i-1])) ||
+				!unicode.IsDigit(rune(expression[i+1])) {
+
 				return "", agent_errors.ErrInvalidFloat
 			}
 		} else if !unicode.IsDigit(char) && !slices.Contains(es.chars, char) {
@@ -116,104 +113,126 @@ func (es *ExpressionService) ValidateExpression(expression string) (string, erro
 	return expression, nil
 }
 
-// ParseToInfix returns operands and operators from expression in preorder
-func (es *ExpressionService) ParseToInfix(expression string) ([]float64, []string, error) {
-	// Разбираем выражение на операторы и операнды
-	operators := make([]string, 0)
-	operands := make([]float64, 0)
-	operatorStack := make([]string, 0)
+func (es *ExpressionService) ToInfix(expr string) []string {
+	output := []string{}
+	operators := map[string]int{"+": 1, "-": 1, "*": 2, "/": 2, "^": 3}
 
-	// Функция для обработки операторов в стеке с учетом приоритета
-	processOperators := func(i int) {
-		for len(operatorStack) > 0 &&
-			es.getOperatorPriority(operatorStack[len(operatorStack)-1]) >= es.getOperatorPriority(string(expression[i])) {
-			operators = append(operators, operatorStack[len(operatorStack)-1])
-			operatorStack = operatorStack[:len(operatorStack)-1]
+	tokens := tokenize(expr)
+	stack := []string{}
+
+	for _, token := range tokens {
+		if isNumber(token) || isNegativeNumber(token) {
+			output = append(output, token)
+		} else if token == "(" {
+			stack = append(stack, token)
+		} else if token == ")" {
+			for len(stack) > 0 && stack[len(stack)-1] != "(" {
+				output = append(output, stack[len(stack)-1])
+				stack = stack[:len(stack)-1]
+			}
+			stack = stack[:len(stack)-1] // Remove "("
+		} else if isOperator(token) {
+			for len(stack) > 0 && operators[token] <= operators[stack[len(stack)-1]] {
+				output = append(output, stack[len(stack)-1])
+				stack = stack[:len(stack)-1]
+			}
+			stack = append(stack, token)
 		}
 	}
 
-	for i := 0; i < len(expression); {
-		switch char := expression[i]; char {
-		case '+', '-', '*', '/', '^':
-			processOperators(i)
-			operatorStack = append(operatorStack, string(char))
-			i++
-		case '(', ')':
-			if char == '(' {
-				operatorStack = append(operatorStack, string(char))
-			} else {
-				for len(operatorStack) > 0 && operatorStack[len(operatorStack)-1] != "(" {
-					operators = append(operators, operatorStack[len(operatorStack)-1])
-					operatorStack = operatorStack[:len(operatorStack)-1]
-				}
-				if len(operatorStack) == 0 {
-					return nil, nil, fmt.Errorf("несогласованные скобки в выражении")
-				}
-				operatorStack = operatorStack[:len(operatorStack)-1] // Убираем открывающую скобку
-			}
-			i++
-		default:
-			// Читаем операнд
-			var operandString string
-			for ; i < len(expression) && (expression[i] == '.' || unicode.IsDigit(rune(expression[i]))); i++ {
-				operandString += string(expression[i])
-			}
+	for len(stack) > 0 {
+		output = append(output, stack[len(stack)-1])
+		stack = stack[:len(stack)-1]
+	}
 
-			operand, err := strconv.ParseFloat(operandString, 64)
+	return output
+}
+
+func (es *ExpressionService) CalculateInfix(tokens []string) (float64, error) {
+	stack := []float64{}
+
+	for _, token := range tokens {
+		if isNumber(token) || isNegativeNumber(token) {
+			num, err := strconv.ParseFloat(token, 64)
 			if err != nil {
-				return nil, nil, agent_errors.ErrOperandParsing(operandString, err)
+				return 0, err
 			}
-			operands = append(operands, operand)
+			stack = append(stack, num)
+		} else if isOperator(token) {
+			if len(stack) < 2 {
+				return 0, fmt.Errorf("insufficient operands for operator: %s", token)
+			}
+			operand2 := stack[len(stack)-1]
+			operand1 := stack[len(stack)-2]
+			stack = stack[:len(stack)-2]
+
+			switch token {
+			case "+":
+				time.Sleep(es.AddTime)
+				stack = append(stack, operand1+operand2)
+			case "-":
+				time.Sleep(es.SubtractionTime)
+				stack = append(stack, operand1-operand2)
+			case "*":
+				time.Sleep(es.MultiplyTime)
+				stack = append(stack, operand1*operand2)
+			case "/":
+				time.Sleep(es.DivisionTime)
+				if operand2 == 0 {
+					return 0, fmt.Errorf("division by zero")
+				}
+				stack = append(stack, operand1/operand2)
+			case "^":
+				time.Sleep(es.MultiplyTime * time.Duration(operand2))
+				stack = append(stack, math.Pow(operand1, operand2))
+			}
 		}
 	}
 
-	processOperators(len(expression) - 1)
-
-	return operands, operators, nil
-}
-
-// getOperatorPriority возвращает приоритет оператора
-func (es *ExpressionService) getOperatorPriority(operator string) int {
-	switch operator {
-	case "+", "-":
-		return 1
-	case "*", "/":
-		return 2
-	case "^":
-		return 3
-	default:
-		return 0
+	if len(stack) != 1 {
+		return 0, fmt.Errorf("invalid expression")
 	}
+
+	return stack[0], nil
 }
 
-// CalculateInfix calculate preorder operands and operators
-func (es *ExpressionService) CalculateInfix(operands []float64, operators []string) float64 {
-	// Вычисляем выражение с учетом задержек для всех операций
-	result := operands[0]
+func isNumber(s string) bool {
+	_, err := strconv.ParseFloat(s, 64)
+	return err == nil
+}
 
-	for i := 0; i < len(operators); i++ {
-		switch operators[i] {
-		case "+":
-			// Задержка для учета времени выполнения сложения
-			time.Sleep(es.AddTime)
-			result += operands[i+1]
-		case "-":
-			// Задержка для учета времени выполнения вычитания
-			time.Sleep(es.SubtractionTime)
-			result -= operands[i+1]
-		case "*":
-			// Задержка для учета времени выполнения умножения
-			time.Sleep(es.MultiplyTime)
-			result *= operands[i+1]
-		case "/":
-			// Задержка для учета времени выполнения деления
-			time.Sleep(es.DivisionTime)
-			result /= operands[i+1]
-		case "^":
-			// Задержка для учета времени выполнения возведения в степень
-			time.Sleep(es.MultiplyTime * time.Duration(operands[i+1]))
-			result = math.Pow(result, operands[i+1])
+func isOperator(s string) bool {
+	return s == "+" || s == "-" || s == "*" || s == "/" || s == "^"
+}
+
+func isNegativeNumber(s string) bool {
+	return strings.HasPrefix(s, "-") && len(s) > 1 && isNumber(s[1:])
+}
+
+// returns slice of operators
+func tokenize(expr string) []string {
+	tokens := []string{}
+	currentToken := ""
+
+	for _, char := range expr {
+		if char == ' ' {
+			continue
+		}
+
+		if isOperator(string(char)) || char == '(' || char == ')' {
+			if currentToken != "" {
+				tokens = append(tokens, currentToken)
+				currentToken = ""
+			}
+			tokens = append(tokens, string(char))
+		} else {
+			currentToken += string(char)
 		}
 	}
-	return result
+
+	if currentToken != "" {
+		tokens = append(tokens, currentToken)
+	}
+
+	return tokens
 }
