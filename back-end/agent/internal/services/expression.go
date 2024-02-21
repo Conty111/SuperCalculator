@@ -2,12 +2,13 @@ package services
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/agent_errors"
 	"github.com/Conty111/SuperCalculator/back-end/models"
 	"github.com/IBM/sarama"
-	"github.com/mnogu/go-calculator"
 	"github.com/rs/zerolog/log"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -39,11 +40,6 @@ func (es *ExpressionService) Proccess(msg *sarama.ConsumerMessage) *models.Resul
 	}
 	r.Task = t
 	log.Debug().Any("task", t).Str("key", string(msg.Key)).Msg("parsed to json")
-	//key, err := strconv.Atoi(string(msg.Key))
-	//if err != nil {
-	//	return nil, err
-	//}
-	//t.ID = uint(key)
 	expression, err := es.ValidateExpression(t.Expression)
 	if err != nil {
 		r.Error = err.Error()
@@ -68,11 +64,11 @@ func (es *ExpressionService) SetOperationDuration(settings *models.DurationSetti
 }
 
 func (es *ExpressionService) Calculate(expression string) (float64, error) {
-	res, err := calculator.Calculate(expression)
+	exp := es.infixToRPN(strings.TrimSpace(expression))
+	res, err := es.evaluateRPN(exp)
 	if err != nil {
 		return 0, err
 	}
-	es.delay(expression)
 
 	return res, nil
 }
@@ -112,149 +108,134 @@ func (es *ExpressionService) ValidateExpression(expression string) (string, erro
 	return expression, nil
 }
 
-func (es *ExpressionService) delay(expr string) {
-	strings.ReplaceAll(expr, " ", "")
-	var prevChar rune
-	for _, char := range expr {
-		switch char {
-		case '-':
-			if prevChar == 0 || unicode.IsDigit(prevChar) {
-				time.Sleep(es.SubtractionTime)
-			}
-		case '+':
-			log.Debug().Dur("dur", es.AddTime).Msg("sleep")
-			time.Sleep(es.AddTime)
-		case '*':
-			time.Sleep(es.MultiplyTime)
-		case '/':
-			time.Sleep(es.DivisionTime)
-		case '^':
-			time.Sleep(es.MultiplyTime)
-		}
-		prevChar = char
+func isOperator(ch string) bool {
+	return ch == "+" || ch == "-" || ch == "*" || ch == "/"
+}
+
+func getPrecedence(operator string) int {
+	switch operator {
+	case "+", "-":
+		return 1
+	case "*", "/":
+		return 2
+	default:
+		return 0
 	}
 }
 
-//func (es *ExpressionService) ToInfix(expr string) []string {
-//	output := []string{}
-//	operators := map[string]int{"+": 1, "-": 1, "*": 2, "/": 2, "^": 3}
-//
-//	tokens := tokenize(expr)
-//	stack := []string{}
-//
-//	for _, token := range tokens {
-//		if isNumber(token) || isNegativeNumber(token) {
-//			output = append(output, token)
-//		} else if token == "(" {
-//			stack = append(stack, token)
-//		} else if token == ")" {
-//			for len(stack) > 0 && stack[len(stack)-1] != "(" {
-//				output = append(output, stack[len(stack)-1])
-//				stack = stack[:len(stack)-1]
-//			}
-//			stack = stack[:len(stack)-1] // Remove "("
-//		} else if isOperator(token) {
-//			for len(stack) > 0 && operators[token] <= operators[stack[len(stack)-1]] {
-//				output = append(output, stack[len(stack)-1])
-//				stack = stack[:len(stack)-1]
-//			}
-//			stack = append(stack, token)
-//		}
-//	}
-//
-//	for len(stack) > 0 {
-//		output = append(output, stack[len(stack)-1])
-//		stack = stack[:len(stack)-1]
-//	}
-//
-//	return output
-//}
-//
-//func (es *ExpressionService) CalculateInfix(tokens []string) (float64, error) {
-//	stack := []float64{}
-//
-//	for _, token := range tokens {
-//		if isNumber(token) || isNegativeNumber(token) {
-//			num, err := strconv.ParseFloat(token, 64)
-//			if err != nil {
-//				return 0, err
-//			}
-//			stack = append(stack, num)
-//		} else if isOperator(token) {
-//			if len(stack) < 2 {
-//				return 0, fmt.Errorf("insufficient operands for operator: %s", token)
-//			}
-//			operand2 := stack[len(stack)-1]
-//			operand1 := stack[len(stack)-2]
-//			stack = stack[:len(stack)-2]
-//
-//			switch token {
-//			case "+":
-//				time.Sleep(es.AddTime)
-//				stack = append(stack, operand1+operand2)
-//			case "-":
-//				time.Sleep(es.SubtractionTime)
-//				stack = append(stack, operand1-operand2)
-//			case "*":
-//				time.Sleep(es.MultiplyTime)
-//				stack = append(stack, operand1*operand2)
-//			case "/":
-//				time.Sleep(es.DivisionTime)
-//				if operand2 == 0 {
-//					return 0, fmt.Errorf("division by zero")
-//				}
-//				stack = append(stack, operand1/operand2)
-//			case "^":
-//				time.Sleep(es.MultiplyTime * time.Duration(operand2))
-//				stack = append(stack, math.Pow(operand1, operand2))
-//			}
-//		}
-//	}
-//
-//	if len(stack) != 1 {
-//		return 0, fmt.Errorf("invalid expression")
-//	}
-//
-//	return stack[0], nil
-//}
-//
-//func isNumber(s string) bool {
-//	_, err := strconv.ParseFloat(s, 64)
-//	return err == nil
-//}
-//
-//func isOperator(s string) bool {
-//	return s == "+" || s == "-" || s == "*" || s == "/" || s == "^"
-//}
-//
-//func isNegativeNumber(s string) bool {
-//	return strings.HasPrefix(s, "-") && len(s) > 1 && isNumber(s[1:])
-//}
-//
-//// returns slice of operators
-//func tokenize(expr string) []string {
-//	tokens := []string{}
-//	currentToken := ""
-//
-//	for _, char := range expr {
-//		if char == ' ' {
-//			continue
-//		}
-//
-//		if isOperator(string(char)) || char == '(' || char == ')' {
-//			if currentToken != "" {
-//				tokens = append(tokens, currentToken)
-//				currentToken = ""
-//			}
-//			tokens = append(tokens, string(char))
-//		} else {
-//			currentToken += string(char)
-//		}
-//	}
-//
-//	if currentToken != "" {
-//		tokens = append(tokens, currentToken)
-//	}
-//
-//	return tokens
-//}
+func (es *ExpressionService) infixToRPN(infix string) string {
+	var result string
+	var stack []string
+
+	// Функция для добавления оператора в результат или в стек
+	pushOperator := func(operator string) {
+		for len(stack) > 0 && isOperator(stack[len(stack)-1]) && getPrecedence(stack[len(stack)-1]) >= getPrecedence(operator) {
+			result += stack[len(stack)-1] + " "
+			stack = stack[:len(stack)-1]
+		}
+		stack = append(stack, operator)
+	}
+
+	tokens := make([]string, 0)
+	currentToken := ""
+
+	// Разбиваем строку на токены
+	for _, char := range infix {
+		if unicode.IsDigit(char) || char == '.' || (char == '-' && (len(currentToken) == 0 || unicode.IsSpace(rune(currentToken[len(currentToken)-1])))) {
+			currentToken += string(char)
+		} else if isOperator(string(char)) || char == '(' || char == ')' {
+			if currentToken != "" {
+				tokens = append(tokens, currentToken)
+				currentToken = ""
+			}
+			tokens = append(tokens, string(char))
+		} else if !unicode.IsSpace(char) {
+			// Пропускаем пробелы и обрабатываем только числа и операторы
+			fmt.Printf("Unsupported character: %c\n", char)
+		}
+	}
+	if currentToken != "" {
+		tokens = append(tokens, currentToken)
+	}
+
+	// Преобразуем токены в обратную польскую запись
+	for _, token := range tokens {
+		if num, err := strconv.ParseFloat(token, 64); err == nil {
+			// Если токен - число, добавляем его в результат
+			result += fmt.Sprintf("%f ", num)
+		} else if isOperator(token) {
+			// Если токен - оператор, добавляем его в результат или в стек
+			pushOperator(token)
+		} else if token == "(" {
+			// Если токен - '(', добавляем его в стек
+			stack = append(stack, token)
+		} else if token == ")" {
+			// Если токен - ')', перемещаем операторы из стека в результат до '('
+			for len(stack) > 0 && stack[len(stack)-1] != "(" {
+				result += stack[len(stack)-1] + " "
+				stack = stack[:len(stack)-1]
+			}
+			// Убираем '(' из стека
+			stack = stack[:len(stack)-1]
+		}
+	}
+
+	// Добавляем оставшиеся операторы из стека в результат
+	for len(stack) > 0 {
+		result += stack[len(stack)-1] + " "
+		stack = stack[:len(stack)-1]
+	}
+
+	return strings.TrimSpace(result)
+}
+
+func (es *ExpressionService) evaluateRPN(rpn string) (float64, error) {
+	var stack []float64
+	tokens := strings.Fields(rpn)
+
+	for _, token := range tokens {
+		if token == "" {
+			continue // Игнорировать пустые строки
+		}
+
+		if num, err := strconv.ParseFloat(token, 64); err == nil {
+			// Если токен - число, поместить его в стек
+			stack = append(stack, num)
+		} else if isOperator(token) {
+			// Если токен - оператор, выполнить операцию с двумя верхними элементами стека
+			if len(stack) < 2 {
+				return 0, fmt.Errorf("insufficient operands for operator %s", token)
+			}
+			operand2 := stack[len(stack)-1]
+			operand1 := stack[len(stack)-2]
+			stack = stack[:len(stack)-2]
+
+			var result float64
+			switch token {
+			case "+":
+				time.Sleep(es.AddTime)
+				result = operand1 + operand2
+			case "-":
+				time.Sleep(es.SubtractionTime)
+				result = operand1 - operand2
+			case "*":
+				time.Sleep(es.MultiplyTime)
+				result = operand1 * operand2
+			case "/":
+				time.Sleep(es.DivisionTime)
+				if operand2 == 0 {
+					return 0, fmt.Errorf("division by zero")
+				}
+				result = operand1 / operand2
+			}
+
+			stack = append(stack, result)
+		}
+	}
+
+	if len(stack) != 1 {
+		return 0, fmt.Errorf("invalid expression")
+	}
+
+	return stack[0], nil
+}

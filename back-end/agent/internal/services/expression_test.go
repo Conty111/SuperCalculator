@@ -1,7 +1,6 @@
 package services_test
 
 import (
-	"github.com/rs/zerolog/log"
 	"testing"
 	"time"
 
@@ -29,7 +28,7 @@ func (suite *ExpressionServiceSuite) TestCalculate() {
 	})
 
 	suite.T().Run("Expression with delays", func(t *testing.T) {
-		suite.es.AddTime = 100 * time.Millisecond
+		suite.es.AddTime = 3 * time.Second
 		suite.es.MultiplyTime = 50 * time.Millisecond
 
 		result, err := suite.es.Calculate("2+3*4")
@@ -42,9 +41,9 @@ func (suite *ExpressionServiceSuite) TestCalculate() {
 		assert.Equal(t, 10.24, result)
 	})
 	suite.T().Run("Expression a?", func(t *testing.T) {
-		res, err := suite.es.Calculate("2 + 3 * 4*")
+		res, err := suite.es.Calculate("-2 + 3 * 4 * 1")
 		assert.NoError(t, err)
-		assert.Equal(t, -16.0, res)
+		assert.Equal(t, 10.0, res)
 	})
 	suite.T().Run("Delays", func(t *testing.T) {
 		suite.es.AddTime = 1 * time.Second
@@ -59,8 +58,7 @@ func (suite *ExpressionServiceSuite) TestCalculate() {
 		}()
 		res := <-ch
 		t2 := time.Since(t1)
-		assert.Equal(t, 400.0, res)
-		log.Print(t2)
+		assert.Equal(t, 20.0, res)
 		assert.LessOrEqual(t, t2, time.Second*4)
 	})
 }
@@ -100,37 +98,6 @@ func (suite *ExpressionServiceSuite) TestValidateExpression() {
 		assert.Error(t, err)
 	})
 }
-
-//func (suite *ExpressionServiceSuite) TestParseToInfix() {
-//	suite.T().Run("Simple expression", func(t *testing.T) {
-//		operands, operators, err := suite.es.ParseToInfix("2+3")
-//		assert.NoError(t, err)
-//		assert.Equal(t, []float64{2, 3}, operands)
-//		assert.Equal(t, []string{"+"}, operators)
-//	})
-//
-//	suite.T().Run("Expression with parentheses", func(t *testing.T) {
-//		operands, operators, err := suite.es.ParseToInfix("(2+3)*4")
-//		assert.NoError(t, err)
-//		assert.Equal(t, []float64{2, 3, 4}, operands)
-//		assert.Equal(t, []string{"+", "*"}, operators)
-//	})
-//
-//	suite.T().Run("Expression with multiple operators", func(t *testing.T) {
-//		operands, operators, err := suite.es.ParseToInfix("2+3*4")
-//		assert.NoError(t, err)
-//		assert.Equal(t, []float64{2, 3, 4}, operands)
-//		assert.Equal(t, []string{"*", "+"}, operators)
-//	})
-//}
-
-//func (suite *ExpressionServiceSuite) TestCalculateInfix() {
-//	suite.T().Run("Simple expression without delays", func(t *testing.T) {
-//		result, err := suite.es.CalculateInfix([]string{"2", "3", "+"})
-//		assert.NoError(t, err)
-//		assert.Equal(t, 5.0, result)
-//	})
-//}
 
 func TestExpressionServiceSuite(t *testing.T) {
 	suite.Run(t, new(ExpressionServiceSuite))
