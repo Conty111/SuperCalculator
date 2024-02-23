@@ -67,6 +67,11 @@ front-end часть в проекте отсутствует.
 
 Для запуска системы нужны Go v1.21.6 (и выше) и Docker вместе с docker-compose
 
+## Windows preinstalling
+
+Go-sqlite3 требует gcc компилятор, которого по умолчанию нет в Windows. Для установки, можно перейти на сайт https://jmeubank.github.io/tdm-gcc/ и установить его
+![image](https://github.com/Conty111/SuperCalculator/assets/90860829/5fed60e6-442f-4ec7-aafb-5360ba3e3e50)
+
 ## Quick start
 
 Для качественного просмотра работы системы, рекомендую пропустить этот пункт и спуститься ниже к пункту **Start in multiple termunals**. Однако, для простого запуска, хватит и этого
@@ -84,12 +89,6 @@ front-end часть в проекте отсутствует.
 ```
 .\run_local.ps1
 ```
-
-## Windows preinstalling
-
-Go-sqlite3 требует gcc компилятор, которого по умолчанию нет в Windows. Для установки, можно перейти на сайт https://jmeubank.github.io/tdm-gcc/ и установить его
-![image](https://github.com/Conty111/SuperCalculator/assets/90860829/5fed60e6-442f-4ec7-aafb-5360ba3e3e50)
-
 
 ## Start in multiple terminals
 
