@@ -73,17 +73,23 @@ front-end часть в проекте отсутствует.
 
 1. Установить зависимости``go mod tidy``
 
-### On Mac/Linux
+#### On Mac/Linux
 
 ```
 ./run_local.sh
 ```
 
-### On Windows
+#### On Windows
 
 ```
 .\run_local.ps1
 ```
+
+## Windows preinstalling
+
+Go-sqlite3 требует gcc компилятор, которого по умолчанию нет в Windows. Для установки, можно перейти на сайт https://jmeubank.github.io/tdm-gcc/ и установить его
+![image](https://github.com/Conty111/SuperCalculator/assets/90860829/5fed60e6-442f-4ec7-aafb-5360ba3e3e50)
+
 
 ## Start in multiple terminals
 
