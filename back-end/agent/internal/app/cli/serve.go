@@ -15,8 +15,6 @@ import (
 
 // NewServeCmd starts new application instance
 func NewServeCmd() *cobra.Command {
-	var http_port uint
-	var agent_id uint
 	command := &cobra.Command{
 		Use:     "serve",
 		Aliases: []string{"s"},
@@ -30,16 +28,11 @@ func NewServeCmd() *cobra.Command {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
-			http_port, err := cmd.Flags().GetUint("http_port")
+			num, err := strconv.Atoi(args[0])
 			if err != nil {
-				log.Fatal().Err(err).Msg("failed to get http_port flags value")
+				log.Fatal().Err(err).Msg("Invalid index argument")
 			}
-			ctx = context.WithValue(ctx, "http_port", strconv.Itoa(int(http_port)))
-			num, err := cmd.Flags().GetUint("agent_id")
-			if err != nil {
-				log.Fatal().Err(err).Msg("failed to get http_port flags value")
-			}
-			ctx = context.WithValue(ctx, "partition", int32(num))
+			ctx = context.WithValue(ctx, "index", num)
 
 			application, err := app.InitializeApplication(ctx)
 
@@ -59,11 +52,6 @@ func NewServeCmd() *cobra.Command {
 			log.Info().Msg("Finished")
 		},
 	}
-	command.Flags().UintVar(&agent_id, "agent_id", 0, "equal to number of partition which should be used by consumer")
-	command.Flags().UintVar(&http_port, "http_port", 0, "http agent server port")
-	err := command.MarkFlagRequired("http_port")
-	if err != nil {
-		log.Fatal().Err(err)
-	}
+
 	return command
 }

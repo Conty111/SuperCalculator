@@ -7,8 +7,8 @@ import (
 
 // InitializeEnvs intializes envy
 func InitializeEnvs() {
-	if err := envy.Load(); err != nil {
-		log.Info().Err(err).Msg("can not load .env file")
+	if err := envy.Load("agent.env", "kafka.env"); err != nil {
+		log.Error().Err(err).Msg("can not load .env file")
 
 		envy.Reload()
 	}

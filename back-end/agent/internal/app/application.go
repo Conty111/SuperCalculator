@@ -32,9 +32,8 @@ func InitializeApplication(ctx context.Context) (*Application, error) {
 }
 
 func BuildApplication(ctx context.Context) (*Application, error) {
-	cfg := config.GetConfig()
-	cfg.BrokerCfg.Partition = ctx.Value("partition").(int32)
-	cfg.HTTPConfig.Port = ctx.Value("http_port").(string)
+	cfg := config.GetConfig(ctx)
+
 	info := initializers.InitializeBuildInfo()
 	monitor := initializers.InitializeMonitor(cfg.BrokerCfg.Partition)
 	svc := initializers.InitializeExpressionService()

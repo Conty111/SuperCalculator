@@ -98,9 +98,9 @@ go mod tidy
 ```
 2. Запустить kafka брокер
 ```
-docker-compose -f docker-compose-kafka.yml -d
+docker-compose -f docker-compose-kafka.yml up -d
 ```
-3. Переименовать .env в .env.example и отредактировать HTTP порты и адреса под себя (указать URL адреса для агентов, например)
+3. Переименовать .env.example в .env и отредактировать HTTP порты и адреса под себя (указать URL адреса для агентов, например)
 ```
 HTTP_AGENT_ADDRESSES="localhost:8001/api/v1;localhost:8002/api/v1"
 ```

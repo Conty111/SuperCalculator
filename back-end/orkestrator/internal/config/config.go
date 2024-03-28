@@ -1,22 +1,24 @@
 package config
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/Conty111/SuperCalculator/back-end/system_config"
 	"github.com/IBM/sarama"
 	"github.com/gin-gonic/gin"
 	"github.com/gobuffalo/envy"
 	"github.com/rs/zerolog/log"
+	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
 type Configuration struct {
-	App        *App
-	DB         *DatabaseConfig
-	HTTPConfig *HTTPConfig
-	BrokerCfg  *BrokerConfig
+	App            *App
+	DB             *DatabaseConfig
+	HTTPConfig     *HTTPConfig
+	BrokerCfg      *BrokerConfig
+	JSONConfigPath string
 }
 
 type BrokerConfig struct {
@@ -44,45 +46,60 @@ type App struct {
 	LoggerCfg       gin.LoggerConfig
 	TimeoutResponse time.Duration
 	TimeToRetry     time.Duration
+	Agents          []system_config.AgentConfig
 }
 
 type HTTPConfig struct {
-	Host           string
-	Port           string
-	AgentAddresses []string
+	Host string
+	Port string
 }
 
 var config *Configuration
 
-func GetConfig(ctx context.Context) *Configuration {
+func GetConfig() *Configuration {
 	if config != nil {
 		return config
 	}
 
 	cfg := getFromEnv()
-	local := ctx.Value("local").(bool)
-	if local {
-		base_port, err := strconv.Atoi(cfg.HTTPConfig.Port)
-		if err != nil {
-			log.Fatal().Err(err).Msg("error while converting http port")
-		}
-		agents_count := ctx.Value("agents_count").(uint)
-		addresses := make([]string, agents_count)
-		var i int
-		for port := uint(base_port) + 1; port < uint(base_port)+agents_count+1; port++ {
-			addresses[i] = fmt.Sprintf("localhost:%d/api/v1", port)
-			i++
-		}
-		cfg.HTTPConfig.AgentAddresses = addresses
-	}
+	setJSONconfig(cfg)
 	config = cfg
 
 	return cfg
 }
 
+func setJSONconfig(cfg *Configuration) {
+	file, err := os.Open(cfg.JSONConfigPath)
+	if err != nil {
+		log.Fatal().Err(err).Msg("can't open json system_config")
+	}
+	defer file.Close()
+
+	// Decode JSON from file
+	decoder := json.NewDecoder(file)
+
+	var jsonData system_config.JSONData
+	if err := decoder.Decode(&jsonData); err != nil {
+		log.Fatal().Err(err).Msg("can't read json system_config")
+	}
+
+	brokers := make([]string, len(jsonData.Brokers))
+	for i, broker := range jsonData.Brokers {
+		brokers[i] = broker.Address
+	}
+
+	cfg.BrokerCfg.Brokers = brokers
+	cfg.App.Agents = jsonData.Agents
+}
+
 func getFromEnv() *Configuration {
 	var cfg = &Configuration{}
 
+	err := envy.Load(".env", "orkestrator.env", "kafka.env")
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+	cfg.JSONConfigPath = envy.Get("JSON_CONFIG_PATH", "system_config.json")
 	cfg.App = getAppConf()
 	cfg.DB = getDBConfig()
 	cfg.HTTPConfig = getWebConf()
@@ -99,9 +116,14 @@ func getDBConfig() *DatabaseConfig {
 	dbCfg.Password = envy.Get("DB_PASSWORD", "sqlite")
 	dbCfg.DBName = envy.Get("DB_NAME", "test")
 	dbCfg.SSLMode = envy.Get("DB_SSLMODE", "disable")
-	dbCfg.Path = envy.Get("PATH_TO_DB", "back-end/db/test.db")
+	dbCfg.Path = envy.Get("PATH_TO_DB_FILE", "back-end/db/test.db")
 	dbCfg.DBtype = envy.Get("DB_TYPE", "sqlite")
-	dbCfg.Port = getDbPort()
+	port, err := strconv.Atoi(envy.Get("DB_PORT", "5432"))
+	if err != nil {
+		log.Fatal().Err(err).Msg("cannot get DB_PORT")
+	}
+	dbCfg.Port = port
+
 	dbCfg.DSN = getDbDSN(dbCfg)
 
 	return dbCfg
@@ -113,11 +135,13 @@ func getAppConf() *App {
 	cfg.LoggerCfg = gin.LoggerConfig{}
 	tResp, err := strconv.Atoi(envy.Get("TIMEOUT_RESPONSE", "5"))
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to get TIMEOUT_RESPONSE")
+		log.Error().Err(err).Msg("failed to get TIMEOUT_RESPONSE")
+		tResp = 5
 	}
-	tRetry, err := strconv.Atoi(envy.Get("TIME_RETRY", "5"))
+	tRetry, err := strconv.Atoi(envy.Get("RETRY_INTERVAL", "5"))
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to get TIME_RETRY")
+		log.Error().Err(err).Msg("failed to get RETRY_INTERVAL")
+		tRetry = 5
 	}
 	cfg.TimeToRetry = time.Duration(tRetry) * time.Second
 	cfg.TimeoutResponse = time.Duration(tResp) * time.Second
@@ -127,7 +151,7 @@ func getAppConf() *App {
 
 func getBrokerConf() *BrokerConfig {
 	var cfg = BrokerConfig{}
-	cfg.Brokers = strings.Split(envy.Get("BROKERS", "kafka-broker-broker:9092"), ";")
+
 	cfg.ProduceTopic = envy.Get("TASKS_TOPIC", "tasks")
 	cfg.ConsumeTopic = envy.Get("RES_TOPIC", "results")
 	cfg.ConsumerGroup = envy.Get("CONSUMER_GROUP", "orkestrator_group")
@@ -151,18 +175,8 @@ func getWebConf() *HTTPConfig {
 
 	cfg.Host = envy.Get("HTTP_SERVER_HOST", "0.0.0.0")
 	cfg.Port = envy.Get("HTTP_SERVER_PORT", "8000")
-	hosts := envy.Get("HTTP_AGENT_ADDRESSES", "localhost:8001")
-	cfg.AgentAddresses = strings.Split(hosts, ";")
 
 	return &cfg
-}
-
-func getDbPort() int {
-	port, err := strconv.Atoi(envy.Get("DB_PORT", "5432"))
-	if err != nil {
-		log.Fatal().Err(err).Msg("cannot get DB_PORT")
-	}
-	return port
 }
 
 func getDbDSN(dbConfig *DatabaseConfig) string {
