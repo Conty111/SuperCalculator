@@ -9,10 +9,11 @@ import (
 
 func InitializeService(container *dependencies.Container) interfaces.Service {
 	rep := repository.NewTasksRepository(container.Database)
+
 	return services.NewTaskManager(
 		rep,
 		container.Producer.InChan,
-		container.Config.HTTPConfig.AgentAddresses,
+		container.Config.App.Agents,
 		container.Config.App.TimeoutResponse,
 		container.Config.App.TimeToRetry,
 	)

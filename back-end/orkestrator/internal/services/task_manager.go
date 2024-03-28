@@ -9,36 +9,38 @@ import (
 	"github.com/Conty111/SuperCalculator/back-end/models"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/clierrs"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/repository"
+	"github.com/Conty111/SuperCalculator/back-end/system_config"
 	"github.com/rs/zerolog/log"
 	"io"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 )
 
 type TaskManager struct {
-	Repo         *repository.TasksRepository
-	ProduceChan  chan<- models.Task
-	AgentAddress []string
-	timeRetry    time.Duration
-	timeoutResp  time.Duration
-	cachedTasks  map[uint]interface{}
-	lock         sync.RWMutex
+	Repo        *repository.TasksRepository
+	ProduceChan chan<- models.Task
+	Agents      []system_config.AgentConfig
+	timeRetry   time.Duration
+	timeoutResp time.Duration
+	cachedTasks map[uint]interface{}
+	lock        sync.RWMutex
 }
 
 func NewTaskManager(rep *repository.TasksRepository,
 	produceCg chan<- models.Task,
-	agentAddrs []string,
+	agents []system_config.AgentConfig,
 	timeoutResponse time.Duration,
 	timeRetry time.Duration) *TaskManager {
 	return &TaskManager{
-		Repo:         rep,
-		ProduceChan:  produceCg,
-		AgentAddress: agentAddrs,
-		timeoutResp:  timeoutResponse,
-		timeRetry:    timeRetry,
-		cachedTasks:  make(map[uint]interface{}),
-		lock:         sync.RWMutex{},
+		Repo:        rep,
+		ProduceChan: produceCg,
+		Agents:      agents,
+		timeoutResp: timeoutResponse,
+		timeRetry:   timeRetry,
+		cachedTasks: make(map[uint]interface{}),
+		lock:        sync.RWMutex{},
 	}
 }
 
@@ -77,13 +79,13 @@ func (tm *TaskManager) SetSettings(settings *models.Settings) ([]map[string]inte
 
 	client := http.Client{Timeout: tm.timeoutResp}
 	wg := sync.WaitGroup{}
-	wg.Add(len(tm.AgentAddress))
+	wg.Add(len(tm.Agents))
 
-	responseBodys := make([]map[string]interface{}, len(tm.AgentAddress))
-	statuses := make([]int, len(tm.AgentAddress))
+	responseBodys := make([]map[string]interface{}, len(tm.Agents))
+	statuses := make([]int, len(tm.Agents))
 
-	for i, agentAddr := range tm.AgentAddress {
-		agentAddr := agentAddr
+	for i, agent := range tm.Agents {
+		agent := agent
 		i := i
 		go func() {
 			defer wg.Done()
@@ -96,7 +98,7 @@ func (tm *TaskManager) SetSettings(settings *models.Settings) ([]map[string]inte
 			body, status, err := sendRequestToAgent(
 				&client,
 				bytes.NewReader(reqBody),
-				fmt.Sprintf("%s/calculator", agentAddr),
+				fmt.Sprintf("%s/calculator", agent.Address+strconv.Itoa(agent.HttpPort)),
 				http.MethodPut,
 			)
 			if err != nil {
@@ -141,12 +143,12 @@ func (tm *TaskManager) CreateTask(expression string) (*models.TasksModel, error)
 func (tm *TaskManager) GetWorkersInfo() ([]map[string]interface{}, []int) {
 	client := http.Client{Timeout: tm.timeoutResp}
 	wg := sync.WaitGroup{}
-	wg.Add(len(tm.AgentAddress))
+	wg.Add(len(tm.Agents))
 
-	responseBodys := make([]map[string]interface{}, len(tm.AgentAddress))
-	statuses := make([]int, len(tm.AgentAddress))
+	responseBodys := make([]map[string]interface{}, len(tm.Agents))
+	statuses := make([]int, len(tm.Agents))
 
-	for i, agentAddr := range tm.AgentAddress {
+	for i, agentAddr := range tm.Agents {
 		agentAddr := agentAddr
 		i := i
 		go func() {

@@ -8,7 +8,6 @@ require (
 	github.com/gobuffalo/envy v1.10.2
 	github.com/google/jsonapi v1.0.0
 	github.com/google/uuid v1.6.0
-	github.com/mnogu/go-calculator v0.0.1
 	github.com/onsi/ginkgo/v2 v2.15.0
 	github.com/onsi/gomega v1.31.1
 	github.com/rs/zerolog v1.32.0

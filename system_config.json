@@ -1,0 +1,25 @@
+{
+  "brokers": [
+    {"address": "localhost:9092"}
+  ],
+  "agents": [
+    {
+      "name": "agent1",
+      "address": "localhost",
+      "broker_partition": 0,
+      "consumer_group": "agents",
+      "broker_commit_interval": 1,
+      "http_port": 8001,
+      "grpc_port": 8002
+    },
+    {
+      "name": "agent2",
+      "address": "localhost",
+      "broker_partition": 0,
+      "consumer_group": "agents",
+      "broker_commit_interval": 1,
+      "http_port": 8003,
+      "grpc_port": 8002
+    }
+  ]
+}

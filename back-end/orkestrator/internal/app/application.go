@@ -25,11 +25,11 @@ func InitializeApplication(ctx context.Context) (*Application, error) {
 		return nil, err
 	}
 
-	return BuildApplication(ctx)
+	return BuildApplication()
 }
 
-func BuildApplication(ctx context.Context) (*Application, error) {
-	cfg := config.GetConfig(ctx)
+func BuildApplication() (*Application, error) {
+	cfg := config.GetConfig()
 	info := initializers.InitializeBuildInfo()
 	db := initializers.InitializeDatabase(cfg.DB.DSN)
 
