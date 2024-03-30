@@ -19,12 +19,12 @@ var (
 // Controller is a controller implementation for status checks
 type Controller struct {
 	apiv1.BaseController
-	Service      *services.ExpressionService
+	Service      *services.CalculatorService
 	RelativePath string
 }
 
 // NewController creates new status controller instance
-func NewController(svc *services.ExpressionService) *Controller {
+func NewController(svc *services.CalculatorService) *Controller {
 	return &Controller{
 		Service:      svc,
 		RelativePath: "/calculator",

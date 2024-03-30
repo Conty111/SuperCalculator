@@ -259,6 +259,7 @@ func sendRequestToAgent(
 	agentAddr string,
 	method string) (map[string]interface{}, int, error) {
 	body := make(map[string]interface{})
+
 	req, err := http.NewRequest(method, fmt.Sprintf("http://%s", agentAddr), reqBody)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create request")

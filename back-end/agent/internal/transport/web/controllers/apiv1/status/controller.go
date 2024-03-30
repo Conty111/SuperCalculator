@@ -46,7 +46,7 @@ func (ctrl *Controller) GetRelativePath() string {
 func (ctrl *Controller) GetStatus(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, &Response{
 		ID:   ctrl.Monitor.AgentID,
-		Info: ctrl.Monitor.GetStats(),
+		Info: ctrl.Monitor.GetInfo(),
 		//Build:  ctrl.buildInfo,
 	})
 }

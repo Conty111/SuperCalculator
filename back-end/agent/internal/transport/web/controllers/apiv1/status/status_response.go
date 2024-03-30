@@ -6,7 +6,7 @@ import (
 
 // Response is a declaration for a status response
 type Response struct {
-	ID   int32         `json:"id"`
-	Info *models.Stats `json:"info"`
+	ID   int32             `json:"id"`
+	Info *models.AgentInfo `json:"info"`
 	//Build  *build.Info   `json:"build"`
 }
