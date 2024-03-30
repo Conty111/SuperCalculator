@@ -11,14 +11,14 @@ import (
 )
 
 type AppConsumer struct {
-	Service  interfaces.Service
+	Service  interfaces.TaskManager
 	Consumer sarama.Consumer
 	Topic    string
 	Done     chan interface{}
 	lock     sync.Mutex
 }
 
-func NewAppConsumer(svc interfaces.Service,
+func NewAppConsumer(svc interfaces.TaskManager,
 	consumer sarama.Consumer, topic string) *AppConsumer {
 	return &AppConsumer{
 		Topic:    topic,

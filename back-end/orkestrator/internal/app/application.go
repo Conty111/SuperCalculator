@@ -38,12 +38,12 @@ func BuildApplication() (*Application, error) {
 		Config:    cfg,
 		Database:  db,
 	}
-	producer := initializers.InitializeProducer(container)
-	container.Producer = producer
-	svc := initializers.InitializeService(container)
-	container.Service = svc
-	consumer := initializers.InitializeConsumer(container)
-	container.Consumer = consumer
+
+	container.Producer = initializers.InitializeProducer(container)
+	container.TaskManager = initializers.InitializeTaskManager(container)
+	container.AgentManager = initializers.InitializeAgentManager(container)
+	container.Consumer = initializers.InitializeConsumer(container)
+
 	router := initializers.InitializeRouter(container)
 	server := initializers.InitializeHTTPServer(router, cfg.HTTPConfig)
 
@@ -60,7 +60,7 @@ func (a *Application) Start(ctx context.Context, cli bool) {
 	}
 	a.Container.Consumer.Start()
 	a.Container.Producer.Start()
-	a.Container.Service.Start(ctx)
+	a.Container.TaskManager.Start(ctx)
 	a.startHTTPServer()
 }
 

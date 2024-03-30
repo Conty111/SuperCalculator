@@ -2,7 +2,9 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/enums"
 	"github.com/Conty111/SuperCalculator/back-end/system_config"
 	"github.com/IBM/sarama"
 	"github.com/gin-gonic/gin"
@@ -47,6 +49,7 @@ type App struct {
 	TimeoutResponse time.Duration
 	TimeToRetry     time.Duration
 	Agents          []system_config.AgentConfig
+	ApiToUse        enums.ApiType
 }
 
 type HTTPConfig struct {
@@ -143,6 +146,13 @@ func getAppConf() *App {
 		log.Error().Err(err).Msg("failed to get RETRY_INTERVAL")
 		tRetry = 5
 	}
+	var apiType enums.ApiType
+	apiType = enums.ApiType(envy.Get("AGENT_API_TYPE", "rest"))
+	if apiType != enums.RestApi && apiType != enums.GrpcApi {
+		log.Error().Err(errors.New("invalid api type")).Msg("should be rest or grpc")
+		apiType = enums.RestApi
+	}
+	cfg.ApiToUse = apiType
 	cfg.TimeToRetry = time.Duration(tRetry) * time.Second
 	cfg.TimeoutResponse = time.Duration(tResp) * time.Second
 
