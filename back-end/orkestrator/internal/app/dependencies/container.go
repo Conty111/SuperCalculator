@@ -10,10 +10,11 @@ import (
 
 // Container is a DI container for application
 type Container struct {
-	BuildInfo *build.Info
-	Database  *gorm.DB
-	Config    *config.Configuration
-	Consumer  *kafka_broker.AppConsumer
-	Producer  *kafka_broker.AppProducer
-	Service   interfaces.Service
+	BuildInfo    *build.Info
+	Database     *gorm.DB
+	Config       *config.Configuration
+	Consumer     *kafka_broker.AppConsumer
+	Producer     *kafka_broker.AppProducer
+	TaskManager  interfaces.TaskManager
+	AgentManager interfaces.AgentManager
 }

@@ -15,7 +15,6 @@ type ErrResponse struct {
 type MsgResponse struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
-	UserId  uint   `json:"userID"`
 }
 
 // WriteErrResponse writes an error response to the context

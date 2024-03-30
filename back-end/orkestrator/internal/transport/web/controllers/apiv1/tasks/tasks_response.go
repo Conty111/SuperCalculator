@@ -1,4 +1,4 @@
-package manager
+package tasks
 
 import (
 	"github.com/Conty111/SuperCalculator/back-end/models"
@@ -22,14 +22,4 @@ type Task struct {
 type TasksListResponse struct {
 	Status string  `jsonapi:"attr,status"`
 	Tasks  []*Task `json:"tasks"`
-}
-
-type WorkerResponse struct {
-	Status   string                 `json:"worker_response_status"`
-	Response map[string]interface{} `json:"worker_response"`
-}
-
-type WorkersListResponse struct {
-	Status    string           `json:"status"`
-	Responses []WorkerResponse `json:"responses"`
 }
