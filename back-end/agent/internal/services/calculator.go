@@ -1,12 +1,9 @@
 package services
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/agent_errors"
 	"github.com/Conty111/SuperCalculator/back-end/models"
-	"github.com/IBM/sarama"
-	"github.com/rs/zerolog/log"
 	"slices"
 	"strconv"
 	"strings"
@@ -15,7 +12,7 @@ import (
 	"unicode"
 )
 
-type ExpressionService struct {
+type CalculatorService struct {
 	Locker          *sync.RWMutex
 	AddTime         time.Duration
 	MultiplyTime    time.Duration
@@ -24,22 +21,18 @@ type ExpressionService struct {
 	chars           []rune
 }
 
-func NewExpressionService() *ExpressionService {
-	return &ExpressionService{
+func NewCalculatorService() *CalculatorService {
+	return &CalculatorService{
 		Locker: &sync.RWMutex{},
 		chars:  []rune{'+', '-', '*', '/', '(', ')', '^', '.'},
 	}
 }
 
-func (es *ExpressionService) Proccess(msg *sarama.ConsumerMessage) *models.Result {
-	var t models.Task
+func (es *CalculatorService) Execute(t *models.Task) *models.Result {
 	var r models.Result
-	if err := json.Unmarshal(msg.Value, &t); err != nil {
-		log.Error().Msg("Error while parsing json")
-		return nil
-	}
-	r.Task = t
-	log.Debug().Any("task", t).Str("key", string(msg.Key)).Msg("parsed to json")
+
+	r.Task = *t
+
 	expression, err := es.ValidateExpression(t.Expression)
 	if err != nil {
 		r.Error = err.Error()
@@ -50,11 +43,12 @@ func (es *ExpressionService) Proccess(msg *sarama.ConsumerMessage) *models.Resul
 		r.Error = err.Error()
 		return &r
 	}
+
 	r.Value = resNum
 	return &r
 }
 
-func (es *ExpressionService) SetOperationDuration(settings *models.DurationSettings) {
+func (es *CalculatorService) SetOperationDuration(settings *models.DurationSettings) {
 	es.Locker.RLock()
 	defer es.Locker.RUnlock()
 	es.DivisionTime = time.Millisecond * time.Duration(settings.DivisionDuration)
@@ -63,9 +57,13 @@ func (es *ExpressionService) SetOperationDuration(settings *models.DurationSetti
 	es.AddTime = time.Millisecond * time.Duration(settings.AddDuration)
 }
 
-func (es *ExpressionService) Calculate(expression string) (float64, error) {
-	exp := es.infixToRPN(strings.TrimSpace(expression))
-	res, err := es.evaluateRPN(exp)
+// Calculate Calculating expression string
+func (es *CalculatorService) Calculate(expression string) (float64, error) {
+	rpn, err := es.infixToRPN(strings.TrimSpace(expression))
+	if err != nil {
+		return 0, err
+	}
+	res, err := es.evaluateRPN(rpn)
 	if err != nil {
 		return 0, err
 	}
@@ -74,7 +72,7 @@ func (es *ExpressionService) Calculate(expression string) (float64, error) {
 }
 
 // ValidateExpression Check if expression is valid and reformat it
-func (es *ExpressionService) ValidateExpression(expression string) (string, error) {
+func (es *CalculatorService) ValidateExpression(expression string) (string, error) {
 	// Проверяем наличие соответствия открытых и закрытых скобок
 	expression = strings.ReplaceAll(expression, " ", "")
 	openCount, closeCount := 0, 0
@@ -114,23 +112,24 @@ func isOperator(ch string) bool {
 
 func getPrecedence(operator string) int {
 	switch operator {
-	case "+", "-":
-		return 1
 	case "*", "/":
-		return 2
+		return 1
 	default:
-		return 0
+		return 2
 	}
 }
 
-func (es *ExpressionService) infixToRPN(infix string) string {
-	var result string
+func (es *CalculatorService) infixToRPN(infix string) ([]string, error) {
 	var stack []string
+	var nums []float64
+	var operators []string
+	var rpn []string
 
 	// Функция для добавления оператора в результат или в стек
 	pushOperator := func(operator string) {
-		for len(stack) > 0 && isOperator(stack[len(stack)-1]) && getPrecedence(stack[len(stack)-1]) >= getPrecedence(operator) {
-			result += stack[len(stack)-1] + " "
+		for len(stack) > 0 && getPrecedence(stack[len(stack)-1]) <= getPrecedence(operator) {
+			operators = append(operators, stack[len(stack)-1])
+			rpn = append(rpn, stack[len(stack)-1])
 			stack = stack[:len(stack)-1]
 		}
 		stack = append(stack, operator)
@@ -149,9 +148,6 @@ func (es *ExpressionService) infixToRPN(infix string) string {
 				currentToken = ""
 			}
 			tokens = append(tokens, string(char))
-		} else if !unicode.IsSpace(char) {
-			// Пропускаем пробелы и обрабатываем только числа и операторы
-			fmt.Printf("Unsupported character: %c\n", char)
 		}
 	}
 	if currentToken != "" {
@@ -159,57 +155,63 @@ func (es *ExpressionService) infixToRPN(infix string) string {
 	}
 
 	// Преобразуем токены в обратную польскую запись
-	for _, token := range tokens {
-		if num, err := strconv.ParseFloat(token, 64); err == nil {
+	for i := 0; i < len(tokens); i++ {
+		if num, err := strconv.ParseFloat(tokens[i], 64); err == nil {
 			// Если токен - число, добавляем его в результат
-			result += fmt.Sprintf("%f ", num)
-		} else if isOperator(token) {
+			//if indexToInsert > -1 {
+			//	for j := indexToInsert; j < len(nums); j++ {
+			//		nums[j], num = num, nums[j]
+			//	}
+			//}
+			nums = append(nums, num)
+			rpn = append(rpn, tokens[i])
+		} else if isOperator(tokens[i]) {
 			// Если токен - оператор, добавляем его в результат или в стек
-			pushOperator(token)
-		} else if token == "(" {
-			// Если токен - '(', добавляем его в стек
-			stack = append(stack, token)
-		} else if token == ")" {
-			// Если токен - ')', перемещаем операторы из стека в результат до '('
-			for len(stack) > 0 && stack[len(stack)-1] != "(" {
-				result += stack[len(stack)-1] + " "
-				stack = stack[:len(stack)-1]
+			pushOperator(tokens[i])
+		} else if tokens[i] == "(" {
+			// Если токен - '(', запускаем рекурсию
+			var num float64
+			var isFinded bool
+			for j := i + 1; j < len(tokens); j++ {
+				if tokens[j] == ")" {
+					isFinded = true
+					num, err = es.Calculate(strings.Join(tokens[i+1:j], ""))
+					if err != nil {
+						return rpn, err
+					}
+					i = j
+					break
+				}
 			}
-			// Убираем '(' из стека
-			stack = stack[:len(stack)-1]
+			if !isFinded {
+				return rpn, agent_errors.ErrParenthesisNotValid
+			}
+			nums = append(nums, num)
+			rpn = append(rpn, fmt.Sprintf("%f", num))
 		}
 	}
 
 	// Добавляем оставшиеся операторы из стека в результат
 	for len(stack) > 0 {
-		result += stack[len(stack)-1] + " "
+		operators = append(operators, stack[len(stack)-1])
+		rpn = append(rpn, stack[len(stack)-1])
 		stack = stack[:len(stack)-1]
 	}
+	if len(nums)-len(operators) != 1 {
+		return rpn, agent_errors.ErrInvalidExpression
+	}
 
-	return strings.TrimSpace(result)
+	return rpn, nil
 }
 
-func (es *ExpressionService) evaluateRPN(rpn string) (float64, error) {
+func (es *CalculatorService) evaluateRPN(rpn []string) (float64, error) {
 	var stack []float64
-	tokens := strings.Fields(rpn)
 
-	for _, token := range tokens {
-		if token == "" {
-			continue // Игнорировать пустые строки
-		}
-
-		if num, err := strconv.ParseFloat(token, 64); err == nil {
-			// Если токен - число, поместить его в стек
-			stack = append(stack, num)
-		} else if isOperator(token) {
-			// Если токен - оператор, выполнить операцию с двумя верхними элементами стека
-			if len(stack) < 2 {
-				return 0, fmt.Errorf("insufficient operands for operator %s", token)
-			}
+	for _, token := range rpn {
+		if num, err := strconv.ParseFloat(token, 64); err != nil {
 			operand2 := stack[len(stack)-1]
 			operand1 := stack[len(stack)-2]
 			stack = stack[:len(stack)-2]
-
 			var result float64
 			switch token {
 			case "+":
@@ -224,17 +226,14 @@ func (es *ExpressionService) evaluateRPN(rpn string) (float64, error) {
 			case "/":
 				time.Sleep(es.DivisionTime)
 				if operand2 == 0 {
-					return 0, fmt.Errorf("division by zero")
+					return 0, agent_errors.ErrDivisionByZero
 				}
 				result = operand1 / operand2
 			}
-
 			stack = append(stack, result)
+		} else {
+			stack = append(stack, num)
 		}
-	}
-
-	if len(stack) != 1 {
-		return 0, fmt.Errorf("invalid expression")
 	}
 
 	return stack[0], nil

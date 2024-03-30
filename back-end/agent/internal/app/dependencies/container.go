@@ -11,5 +11,5 @@ type Container struct {
 	BuildInfo     *build.Info
 	Config        *config.Configuration
 	Monitor       *services.Monitor
-	ExpressionSvc *services.ExpressionService
+	ExpressionSvc *services.CalculatorService
 }

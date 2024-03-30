@@ -17,13 +17,18 @@ import (
 var _ = Describe("Controller", func() {
 	var (
 		statusCtrl *Controller
+		agentID    int32
+		agentName  string
 	)
 
 	BeforeEach(func() {
 		gin.SetMode(gin.ReleaseMode)
 
+		agentID = 0
+		agentName = "Name"
+
 		info := build.NewInfo()
-		statusCtrl = NewController(info, initializers.InitializeMonitor())
+		statusCtrl = NewController(info, initializers.InitializeMonitor(agentID, agentName))
 	})
 
 	It("controller should not be nil", func() {

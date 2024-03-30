@@ -1,6 +1,7 @@
 package kafka_broker
 
 import (
+	"encoding/json"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/agent_errors"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/services"
 	"github.com/Conty111/SuperCalculator/back-end/models"
@@ -10,13 +11,13 @@ import (
 )
 
 type AppConsumer struct {
-	Service  *services.ExpressionService
+	Service  *services.CalculatorService
 	Consumer sarama.PartitionConsumer
 	Monitor  *services.Monitor
 	Done     chan interface{}
 }
 
-func NewAppConsumer(svc *services.ExpressionService,
+func NewAppConsumer(svc *services.CalculatorService,
 	consumer sarama.PartitionConsumer,
 	mon *services.Monitor) *AppConsumer {
 	return &AppConsumer{
@@ -65,10 +66,21 @@ func (ac *AppConsumer) Proccess(msg *sarama.ConsumerMessage) (*models.Result, er
 		Time("start_time", msg.Timestamp).
 		Str("message", string(msg.Value)).
 		Msg("started processing a message")
-	res := ac.Service.Proccess(msg)
+	res := ac.Service.Execute(ac.parseMessageToTask(msg))
 	if res == nil {
 		return nil, agent_errors.ErrInvalidMessage
 	}
 	log.Info().Str("time of calculation", time.Since(t1).String()).Msg("calculated")
 	return res, nil
+}
+
+func (ac *AppConsumer) parseMessageToTask(msg *sarama.ConsumerMessage) *models.Task {
+	var t models.Task
+
+	if err := json.Unmarshal(msg.Value, &t); err != nil {
+		log.Error().Msg("Error while parsing json")
+		return nil
+	}
+	log.Debug().Any("task", t).Str("key", string(msg.Key)).Msg("parsed to json")
+	return &t
 }

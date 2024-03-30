@@ -35,7 +35,7 @@ func BuildApplication(ctx context.Context) (*Application, error) {
 	cfg := config.GetConfig(ctx)
 
 	info := initializers.InitializeBuildInfo()
-	monitor := initializers.InitializeMonitor(cfg.BrokerCfg.Partition)
+	monitor := initializers.InitializeMonitor(cfg.BrokerCfg.Partition, cfg.App.Name)
 	svc := initializers.InitializeExpressionService()
 	container := &dependencies.Container{
 		BuildInfo:     info,
