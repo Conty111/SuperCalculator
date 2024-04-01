@@ -12,8 +12,8 @@ func InitializeConsumer(container *dependencies.Container) *kafka_broker.AppCons
 		container.Config.BrokerCfg.Brokers,
 		container.Config.BrokerCfg.SaramaCfg)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Error creating Kafka consumer group")
+		log.Panic().Err(err).Msg("Error creating Kafka consumer group")
 	}
 	log.Info().Msg("initialized consumer")
-	return kafka_broker.NewAppConsumer(container.Service, con, container.Config.BrokerCfg.ConsumeTopic)
+	return kafka_broker.NewAppConsumer(container.TaskManager, con, container.Config.BrokerCfg.ConsumeTopic)
 }

@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	. "github.com/Conty111/SuperCalculator/back-end/agent/internal/app/build"
+	. "github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/app/build"
 )
 
 var _ = Describe("Info", func() {

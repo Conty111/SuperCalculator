@@ -47,7 +47,6 @@ func (ctrl *Controller) GetStatus(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, &Response{
 		ID:   ctrl.Monitor.AgentID,
 		Info: ctrl.Monitor.GetInfo(),
-		//Build:  ctrl.buildInfo,
 	})
 }
 

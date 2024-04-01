@@ -9,5 +9,5 @@ import (
 
 func TestApiv1(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Apiv1 Suite")
+	RunSpecs(t, "Apiv1 orkestrator Suite")
 }
