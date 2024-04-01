@@ -119,7 +119,7 @@ func getDBConfig() *DatabaseConfig {
 	dbCfg.Password = envy.Get("DB_PASSWORD", "sqlite")
 	dbCfg.DBName = envy.Get("DB_NAME", "test")
 	dbCfg.SSLMode = envy.Get("DB_SSLMODE", "disable")
-	dbCfg.Path = envy.Get("PATH_TO_DB_FILE", "back-end/db/test.db")
+	dbCfg.Path = envy.Get("PATH_TO_DB_FILE", "back-end/db/local.db")
 	dbCfg.DBtype = envy.Get("DB_TYPE", "sqlite")
 	port, err := strconv.Atoi(envy.Get("DB_PORT", "5432"))
 	if err != nil {
