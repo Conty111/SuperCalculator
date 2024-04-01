@@ -33,7 +33,7 @@ func (ac *AppConsumer) Start() {
 	go func() {
 		partList, err := ac.Consumer.Partitions(ac.Topic)
 		if err != nil {
-			log.Fatal().
+			log.Panic().
 				Err(err).
 				Msg("error to get partitions from topic")
 		}
@@ -42,7 +42,7 @@ func (ac *AppConsumer) Start() {
 		for _, part := range partList {
 			pc, err := ac.Consumer.ConsumePartition(ac.Topic, part, sarama.OffsetNewest)
 			if err != nil {
-				log.Fatal().
+				log.Panic().
 					Err(err).
 					Int32("Partition", part).
 					Msg("error creating consumer for partition")

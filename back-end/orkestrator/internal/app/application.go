@@ -3,13 +3,18 @@ package app
 import (
 	"context"
 	"errors"
-	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/config"
-	"net/http"
-
+	"fmt"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/app/dependencies"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/app/initializers"
+	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/config"
 	"github.com/rs/zerolog/log"
+	"net/http"
+	"time"
 )
+
+var attempt uint
+
+const maxAttemptCount = 3
 
 // Application is a main struct for the application that contains general information
 type Application struct {
@@ -25,10 +30,25 @@ func InitializeApplication(ctx context.Context) (*Application, error) {
 		return nil, err
 	}
 
-	return BuildApplication()
+	return BuildApplication(), nil
 }
 
-func BuildApplication() (*Application, error) {
+func BuildApplication() *Application {
+	defer func() {
+		if r := recover(); r != nil {
+			attempt++
+			if attempt <= maxAttemptCount {
+				log.Error().Uint("Attempt", attempt).Msg("Не удалось запустить приложение, пробуем еще раз")
+				for i := 3; i > 0; i-- {
+					log.Info().Msg(fmt.Sprintf("Перезапуск через %d...", i))
+					time.Sleep(time.Second)
+				}
+				BuildApplication()
+			}
+			log.Fatal().Msg("Не удалось запустить приложение")
+		}
+	}()
+
 	cfg := config.GetConfig()
 	info := initializers.InitializeBuildInfo()
 	db := initializers.InitializeDatabase(cfg.DB.DSN)
@@ -50,7 +70,7 @@ func BuildApplication() (*Application, error) {
 	return &Application{
 		httpServer: server,
 		Container:  container,
-	}, nil
+	}
 }
 
 // Start starts application services
