@@ -43,7 +43,6 @@ func (ac *AppConsumer) Start() <-chan models.Result {
 				return
 			case message := <-ac.Consumer.Messages():
 				// Обработка полученного сообщения
-				ac.Monitor.AddWork()
 				res, err := ac.Proccess(message)
 				if err != nil {
 					log.Debug().Err(err).Msg("invalid message")
@@ -66,7 +65,9 @@ func (ac *AppConsumer) Proccess(msg *sarama.ConsumerMessage) (*models.Result, er
 		Time("start_time", msg.Timestamp).
 		Str("message", string(msg.Value)).
 		Msg("started processing a message")
-	res := ac.Service.Execute(ac.parseMessageToTask(msg))
+	task := ac.parseMessageToTask(msg)
+	ac.Monitor.AddTask(task.ID)
+	res := ac.Service.Execute(task)
 	if res == nil {
 		return nil, agent_errors.ErrInvalidMessage
 	}

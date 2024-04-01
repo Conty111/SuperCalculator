@@ -38,6 +38,6 @@ func buildControllers(container *dependencies.Container) []apiv1.Controller {
 	return []apiv1.Controller{
 		apiv1Status.NewController(container.BuildInfo),
 		apiv1Swagger.NewController(),
-		apiv1Manager.NewController(container.Service),
+		apiv1Manager.NewController(container.TaskManager),
 	}
 }

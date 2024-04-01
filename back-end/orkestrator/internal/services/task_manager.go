@@ -148,8 +148,8 @@ func (tm *TaskManager) GetWorkersInfo() ([]map[string]interface{}, []int) {
 	responseBodys := make([]map[string]interface{}, len(tm.Agents))
 	statuses := make([]int, len(tm.Agents))
 
-	for i, agentAddr := range tm.Agents {
-		agentAddr := agentAddr
+	for i, agent := range tm.Agents {
+		agentAddr := agent.Address
 		i := i
 		go func() {
 			defer wg.Done()

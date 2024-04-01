@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/app/dependencies"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/app/initializers"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/config"
@@ -10,7 +11,12 @@ import (
 	"github.com/Conty111/SuperCalculator/back-end/models"
 	"github.com/rs/zerolog/log"
 	"net/http"
+	"time"
 )
+
+var attempt uint
+
+const maxAttemptCount = 3
 
 // Application is a main struct for the application that contains general information
 type Application struct {
@@ -28,10 +34,25 @@ func InitializeApplication(ctx context.Context) (*Application, error) {
 		return nil, err
 	}
 
-	return BuildApplication(ctx)
+	return BuildApplication(ctx), nil
 }
 
-func BuildApplication(ctx context.Context) (*Application, error) {
+func BuildApplication(ctx context.Context) *Application {
+	defer func() {
+		if r := recover(); r != nil {
+			attempt++
+			if attempt <= maxAttemptCount {
+				log.Error().Uint("Attempt", attempt).Msg("Не удалось запустить приложение, пробуем еще раз")
+				for i := 3; i > 0; i-- {
+					log.Info().Msg(fmt.Sprintf("Перезапуск через %d...", i))
+					time.Sleep(time.Second)
+				}
+				BuildApplication(ctx)
+			}
+			log.Fatal().Msg("Не удалось запустить приложение")
+		}
+	}()
+
 	cfg := config.GetConfig(ctx)
 
 	info := initializers.InitializeBuildInfo()
@@ -54,7 +75,7 @@ func BuildApplication(ctx context.Context) (*Application, error) {
 		consumer:   consumer,
 		producer:   producer,
 		Container:  container,
-	}, nil
+	}
 }
 
 // Start starts application services

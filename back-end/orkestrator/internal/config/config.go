@@ -74,7 +74,8 @@ func GetConfig() *Configuration {
 func setJSONconfig(cfg *Configuration) {
 	file, err := os.Open(cfg.JSONConfigPath)
 	if err != nil {
-		log.Fatal().Err(err).Msg("can't open json system_config")
+		d, _ := os.Getwd()
+		log.Panic().Err(err).Str("current_dir", d).Msg("can't open json system_config")
 	}
 	defer file.Close()
 
@@ -83,7 +84,7 @@ func setJSONconfig(cfg *Configuration) {
 
 	var jsonData system_config.JSONData
 	if err := decoder.Decode(&jsonData); err != nil {
-		log.Fatal().Err(err).Msg("can't read json system_config")
+		log.Panic().Err(err).Msg("can't read json system_config")
 	}
 
 	brokers := make([]string, len(jsonData.Brokers))
@@ -100,7 +101,7 @@ func getFromEnv() *Configuration {
 
 	err := envy.Load(".env", "orkestrator.env", "kafka.env")
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Panic().Err(err).Msg("cannot load env files")
 	}
 	cfg.JSONConfigPath = envy.Get("JSON_CONFIG_PATH", "system_config.json")
 	cfg.App = getAppConf()
@@ -123,7 +124,7 @@ func getDBConfig() *DatabaseConfig {
 	dbCfg.DBtype = envy.Get("DB_TYPE", "sqlite")
 	port, err := strconv.Atoi(envy.Get("DB_PORT", "5432"))
 	if err != nil {
-		log.Fatal().Err(err).Msg("cannot get DB_PORT")
+		log.Panic().Err(err).Msg("cannot convert DB_PORT")
 	}
 	dbCfg.Port = port
 
@@ -167,7 +168,7 @@ func getBrokerConf() *BrokerConfig {
 	cfg.ConsumerGroup = envy.Get("CONSUMER_GROUP", "orkestrator_group")
 	interval, err := strconv.Atoi(envy.Get("COMMIT_INTERVAL", "1"))
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Panic().Err(err).Msg("cannot convert COMMIT_INTERVAL")
 	}
 	cfg.CommitInterval = uint(interval)
 	cfg.SaramaCfg = sarama.NewConfig()

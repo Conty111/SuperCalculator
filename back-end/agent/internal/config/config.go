@@ -69,7 +69,8 @@ func getFromEnv() *Configuration {
 func setJSONconfig(cfg *Configuration, num int) {
 	file, err := os.Open(cfg.JSONConfigPath)
 	if err != nil {
-		log.Fatal().Err(err).Msg("can't open json system_config")
+
+		log.Panic().Err(err).Msg("can't open json system_config")
 	}
 	defer file.Close()
 
@@ -78,7 +79,7 @@ func setJSONconfig(cfg *Configuration, num int) {
 
 	var jsonData system_config.JSONData
 	if err := decoder.Decode(&jsonData); err != nil {
-		log.Fatal().Err(err).Msg("can't read json system_config")
+		log.Panic().Err(err).Msg("can't read json system_config")
 	}
 	if num > len(jsonData.Agents) {
 		log.Fatal().Err(err).Msg("invalid argument or json system_config")
@@ -105,7 +106,7 @@ func getConsumerConf() BrokerConfig {
 	cfg.ProduceTopic = envy.Get("RES_TOPIC", "results")
 	interval, err := strconv.Atoi(envy.Get("COMMIT_INTERVAL", "1"))
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Panic().Err(err).Msg("error converting COMMIT_INTERVAL")
 	}
 	cfg.CommitInterval = uint(interval)
 	cfg.SaramaCfg = sarama.NewConfig()
@@ -130,7 +131,6 @@ func getWebConf() HTTPConfig {
 	var cfg = HTTPConfig{}
 
 	cfg.Host = envy.Get("HTTP_SERVER_HOST", "0.0.0.0")
-	//cfg.Port = envy.Get("HTTP_SERVER_PORT", "8000")
 
 	return cfg
 }
