@@ -1,7 +1,7 @@
 package initializers_test
 
 import (
-	. "github.com/Conty111/SuperCalculator/back-end/agent/internal/app/initializers"
+	. "github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/app/initializers"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

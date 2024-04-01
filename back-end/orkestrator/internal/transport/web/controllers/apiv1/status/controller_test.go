@@ -4,13 +4,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/Conty111/SuperCalculator/back-end/agent/internal/app/build"
+	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/app/build"
 	"github.com/gin-gonic/gin"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	. "github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/web/controllers/apiv1/status"
+	. "github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/controllers/apiv1/status"
 )
 
 var _ = Describe("Controller", func() {

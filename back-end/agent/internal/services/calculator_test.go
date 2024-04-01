@@ -12,7 +12,7 @@ import (
 	. "github.com/Conty111/SuperCalculator/back-end/agent/internal/services"
 )
 
-var _ = Describe("CalculatorService", func() {
+var _ = Describe("Calculator Service", func() {
 	var es *CalculatorService
 
 	BeforeEach(func() {

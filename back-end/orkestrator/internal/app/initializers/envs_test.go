@@ -5,7 +5,7 @@ import (
 	. "github.com/onsi/gomega"
 	"os"
 
-	. "github.com/Conty111/SuperCalculator/back-end/agent/internal/app/initializers"
+	. "github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/app/initializers"
 	"github.com/gobuffalo/envy"
 )
 

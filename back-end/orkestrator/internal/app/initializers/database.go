@@ -15,14 +15,14 @@ func InitMigrations(db *gorm.DB) {
 	)
 	err := db.AutoMigrate(&tasks)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Cannot run auto migrations")
+		log.Panic().Err(err).Msg("Cannot run auto migrations")
 	}
 }
 
 func InitializeDatabase(dbDSN string) *gorm.DB {
 	db, err := gorm.Open(sqlite.Open(dbDSN), &gorm.Config{})
 	if err != nil {
-		log.Fatal().Err(err).Str("path", dbDSN).Msg("Cannot connect to the database")
+		log.Panic().Err(err).Str("path", dbDSN).Msg("Cannot connect to the database")
 	}
 
 	InitMigrations(db)

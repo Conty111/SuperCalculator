@@ -1,12 +1,11 @@
 package status_test
 
 import (
+	"github.com/Conty111/SuperCalculator/back-end/agent/internal/app/build"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/app/initializers"
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"net/http/httptest"
-
-	"github.com/Conty111/SuperCalculator/back-end/agent/internal/app/build"
-	"github.com/gin-gonic/gin"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -22,7 +21,7 @@ var _ = Describe("Controller", func() {
 	)
 
 	BeforeEach(func() {
-		gin.SetMode(gin.ReleaseMode)
+		//gin.SetMode(gin.ReleaseMode)
 
 		agentID = 0
 		agentName = "Name"
@@ -36,14 +35,16 @@ var _ = Describe("Controller", func() {
 	})
 
 	Describe("GetStatus()", func() {
-		It("should return status", func() {
-			w := httptest.NewRecorder()
-			ctx, _ := gin.CreateTestContext(w)
-			ctx.Request, _ = http.NewRequest("GET", "/api/v1/status", nil)
+		Context("default request", func() {
+			It("should return status", func() {
+				w := httptest.NewRecorder()
+				ctx, _ := gin.CreateTestContext(w)
+				ctx.Request, _ = http.NewRequest("GET", "/api/v1/status", nil)
 
-			statusCtrl.GetStatus(ctx)
+				statusCtrl.GetStatus(ctx)
 
-			Expect(w.Result().StatusCode).To(Equal(http.StatusOK))
+				Expect(w.Result().StatusCode).To(Equal(http.StatusOK))
+			})
 		})
 	})
 })
