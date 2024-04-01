@@ -1,0 +1,58 @@
+<div>
+    <h1>Agent Settings</h1>
+    <div>
+        <label for="additionTime">Addition Time (ms):</label>
+        <input type="number" id="additionTime" min="0">
+    </div>
+    <div>
+        <label for="subtractionTime">Subtraction Time (ms):</label>
+        <input type="number" id="subtractionTime" min="0">
+    </div>
+    <div>
+        <label for="multiplicationTime">Multiplication Time (ms):</label>
+        <input type="number" id="multiplicationTime" min="0">
+    </div>
+    <div>
+        <label for="divisionTime">Division Time (ms):</label>
+        <input type="number" id="divisionTime" min="0">
+    </div>
+    <button onclick="saveSettings()" type="submit">Save</button>
+</div>
+
+<script>
+    // Функция для сохранения настроек агентов
+    function saveSettings() {
+        const additionTime = document.getElementById('additionTime').value;
+        const subtractionTime = document.getElementById('subtractionTime').value;
+        const multiplicationTime = document.getElementById('multiplicationTime').value;
+        const divisionTime = document.getElementById('divisionTime').value;
+
+        const settings = {
+            additionTime: parseInt(additionTime),
+            subtractionTime: parseInt(subtractionTime),
+            multiplicationTime: parseInt(multiplicationTime),
+            divisionTime: parseInt(divisionTime)
+        };
+
+        // Ваш код для отправки настроек на сервер
+        // Пример использования fetch:
+        fetch('/api/agentSettings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(settings)
+        })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Settings saved successfully');
+                } else {
+                    throw new Error('Failed to save settings');
+                }
+            })
+            .catch(error => {
+                // Обработка ошибки
+                console.error('Error saving settings:', error);
+            });
+    }
+</script>
