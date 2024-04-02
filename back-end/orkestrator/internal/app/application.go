@@ -51,7 +51,7 @@ func BuildApplication() *Application {
 
 	cfg := config.GetConfig()
 	info := initializers.InitializeBuildInfo()
-	db := initializers.InitializeDatabase(cfg.DB.DSN)
+	db := initializers.InitializeDatabase(cfg.DB.DSN, cfg.DB.DBtype)
 
 	container := &dependencies.Container{
 		BuildInfo: info,

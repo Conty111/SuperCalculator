@@ -5,6 +5,7 @@ import (
 	"github.com/Conty111/SuperCalculator/back-end/models"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/config"
 	"github.com/rs/zerolog/log"
+	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -19,10 +20,23 @@ func InitMigrations(db *gorm.DB) {
 	}
 }
 
-func InitializeDatabase(dbDSN string) *gorm.DB {
-	db, err := gorm.Open(sqlite.Open(dbDSN), &gorm.Config{})
-	if err != nil {
-		log.Panic().Err(err).Str("path", dbDSN).Msg("Cannot connect to the database")
+func InitializeDatabase(dbDSN string, dbType string) *gorm.DB {
+	var db *gorm.DB
+	var err error
+	switch dbType {
+	case "sqlite":
+		db, err = gorm.Open(sqlite.Open(dbDSN), &gorm.Config{})
+		if err != nil {
+			log.Panic().Err(err).Str("path", dbDSN).Msg("Cannot connect to the database")
+		}
+	case "postgres":
+		db, err = gorm.Open(postgres.Open(dbDSN), &gorm.Config{})
+		if err != nil {
+			log.Panic().Err(err).Str("path", dbDSN).Msg("Cannot connect to the database")
+		}
+	default:
+		log.Fatal().Msg(fmt.Sprintf("invalid dbType: %s", dbType))
+		return nil
 	}
 
 	InitMigrations(db)
