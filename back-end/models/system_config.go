@@ -1,8 +1,9 @@
-package system_config
+package models
 
 type JSONData struct {
 	Brokers []struct {
 		Address string `json:"address"`
+		Port    uint   `json:"port"`
 	} `json:"brokers"`
 	Agents []AgentConfig `json:"agents"`
 }

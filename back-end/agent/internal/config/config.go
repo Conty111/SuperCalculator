@@ -3,7 +3,8 @@ package config
 import (
 	"context"
 	"encoding/json"
-	"github.com/Conty111/SuperCalculator/back-end/system_config"
+	"fmt"
+	"github.com/Conty111/SuperCalculator/back-end/models"
 	"github.com/IBM/sarama"
 	"github.com/gin-gonic/gin"
 	"github.com/gobuffalo/envy"
@@ -77,7 +78,7 @@ func setJSONconfig(cfg *Configuration, num int) {
 	// Decode JSON from file
 	decoder := json.NewDecoder(file)
 
-	var jsonData system_config.JSONData
+	var jsonData models.JSONData
 	if err := decoder.Decode(&jsonData); err != nil {
 		log.Panic().Err(err).Msg("can't read json system_config")
 	}
@@ -94,7 +95,7 @@ func setJSONconfig(cfg *Configuration, num int) {
 	cfg.BrokerCfg.CommitInterval = agentCfg.BrokerCommitInterval
 	brokers := make([]string, len(jsonData.Brokers))
 	for i, broker := range jsonData.Brokers {
-		brokers[i] = broker.Address
+		brokers[i] = fmt.Sprintf("%s:%d", broker.Address, broker.Port)
 	}
 	cfg.BrokerCfg.Brokers = brokers
 

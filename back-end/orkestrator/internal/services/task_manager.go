@@ -9,7 +9,6 @@ import (
 	"github.com/Conty111/SuperCalculator/back-end/models"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/clierrs"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/repository"
-	"github.com/Conty111/SuperCalculator/back-end/system_config"
 	"github.com/rs/zerolog/log"
 	"io"
 	"net/http"
@@ -21,7 +20,7 @@ import (
 type TaskManager struct {
 	Repo        *repository.TasksRepository
 	ProduceChan chan<- models.Task
-	Agents      []system_config.AgentConfig
+	Agents      []models.AgentConfig
 	timeRetry   time.Duration
 	timeoutResp time.Duration
 	cachedTasks map[uint]interface{}
@@ -30,7 +29,7 @@ type TaskManager struct {
 
 func NewTaskManager(rep *repository.TasksRepository,
 	produceCg chan<- models.Task,
-	agents []system_config.AgentConfig,
+	agents []models.AgentConfig,
 	timeoutResponse time.Duration,
 	timeRetry time.Duration) *TaskManager {
 	return &TaskManager{
