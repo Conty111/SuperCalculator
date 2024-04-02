@@ -1,3 +1,53 @@
-version: '2'
+version: '3.8'
 
-#services:
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: wurstmeister/kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    env_file:
+      - kafka.env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  agent:
+    build:
+      context: ./back-end/agent
+      dockerfile: Dockerfile
+    container_name: agent
+    depends_on:
+      - kafka
+    environment:
+      COUNT_AGENTS: ${COUNT_AGENTS}
+
+  db:
+    image: postgres:latest
+    container_name: db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data:/var/lib/postgresql/data
+
+  orchestrator:
+    build:
+      context: ./back-end/orkestrator
+      dockerfile: Dockerfile
+    container_name: orchestrator
+    depends_on:
+      - kafka
+      - db
+    environment:
+      COUNT_AGENTS: ${COUNT_AGENTS}
+    ports:
+      - "8000:8000"

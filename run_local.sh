@@ -7,24 +7,31 @@ stop_processes() {
   pkill -P $$
 }
 
+export COUNT_AGENTS=$(jq '.agents | length' config.json)
+
+
 # Обработчик сигнала SIGINT (Ctrl+C)
 trap 'stop_processes; exit 130' INT
 
 cp .env.example .env
 source .env
+source kafka.env
+source agent.env
+source orkestrator.env
 export $(grep -v '^' .env | xargs)
+export $(grep -v '^' orkestrator.env | xargs)
+export $(grep -v '^' agent.env | xargs)
+export $(grep -v '^' kafka.env | xargs)
 
 # Запуск Kafka и приложения
-docker compose -f docker-compose-kafka.yml up -d
+docker-compose -f docker-compose-kafka.yml up -d
 
 # Ожидание запуска Kafka и приложения
-sleep 5
+sleep 3
 
 # Запуск агентов в цикле
 for ((i=0; i<$COUNT_AGENTS; i++)); do
-  http_port=$(($HTTP_SERVER_PORT+i+1))
-  agent_id=$i
-  go run -v ./back-end/agent/cmd/app/main.go s --http_port $http_port --agent_id $agent_id &
+  go run -v ./back-end/agent/cmd/app/main.go s $i &
 done
 
-go run -v ./back-end/orkestrator/cmd/app/main.go serve --local --count_agents $COUNT_AGENTS
+go run -v ./back-end/orkestrator/cmd/app/main.go s

@@ -6,23 +6,17 @@ WORKDIR /src
 
 COPY ./back-end/models ./back-end/models
 COPY ./back-end/agent ./back-end/agent
+COPY .env .
+COPY kafka.env .
+COPY agent.env .
+COPY Makefile .
 
-RUN rm build/app
-
-RUN ./gitlab-cert/update_certificate.sh
-
-# ENV GOPROXY="https://goproxy.io,direct"
-# ENV GOPROXY="direct"
-
-RUN go build ${GOARGS} -tags "${GOTAGS}" -ldflags "${LDFLAGS}" -o . ./back-end/agent/cmd/app
+RUN make build-agent
 
 # production stage
 FROM alpine:3.19.1
 COPY --from=builder /src/api ./api
-COPY --from=builder /src/build .
-
-RUN chmod 777 ./app
-RUN mkdir cert && chmod 777 -R cert
+COPY --from=builder /src/agent_app app
 
 RUN apk update && apk upgrade
 RUN apk add musl-dev && apk add libc6-compat
