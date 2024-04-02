@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/Conty111/SuperCalculator/back-end/models"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/enums"
-	"github.com/Conty111/SuperCalculator/back-end/system_config"
 	"github.com/rs/zerolog/log"
 	"io"
 	"net/http"
@@ -17,7 +16,7 @@ import (
 
 type AgentManager struct {
 	ApiType         enums.ApiType
-	Agents          []system_config.AgentConfig
+	Agents          []models.AgentConfig
 	TimeoutResponse time.Duration
 	HTTPClient      http.Client
 }
@@ -34,7 +33,7 @@ func (s *AgentManager) GetWorkersInfo() ([]map[string]interface{}, []int) {
 
 func NewAgentManager(
 	apiType enums.ApiType,
-	agents []system_config.AgentConfig,
+	agents []models.AgentConfig,
 	timeout time.Duration) *AgentManager {
 
 	return &AgentManager{
@@ -46,7 +45,7 @@ func NewAgentManager(
 
 func (s *AgentManager) GetAgentInfo(
 	wg *sync.WaitGroup,
-	agent system_config.AgentConfig,
+	agent models.AgentConfig,
 ) (map[string]interface{}, int, error) {
 
 	defer wg.Done()
@@ -73,7 +72,7 @@ func (s *AgentManager) GetAgentInfo(
 func (s *AgentManager) SetAgentsSettings(
 	wg *sync.WaitGroup,
 	settings models.Settings,
-	agent system_config.AgentConfig) (map[string]interface{}, int, error) {
+	agent models.AgentConfig) (map[string]interface{}, int, error) {
 
 	defer wg.Done()
 

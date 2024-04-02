@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Conty111/SuperCalculator/back-end/models"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/enums"
-	"github.com/Conty111/SuperCalculator/back-end/system_config"
 	"github.com/IBM/sarama"
 	"github.com/gin-gonic/gin"
 	"github.com/gobuffalo/envy"
@@ -48,7 +48,7 @@ type App struct {
 	LoggerCfg       gin.LoggerConfig
 	TimeoutResponse time.Duration
 	TimeToRetry     time.Duration
-	Agents          []system_config.AgentConfig
+	Agents          []models.AgentConfig
 	ApiToUse        enums.ApiType
 }
 
@@ -82,14 +82,14 @@ func setJSONconfig(cfg *Configuration) {
 	// Decode JSON from file
 	decoder := json.NewDecoder(file)
 
-	var jsonData system_config.JSONData
+	var jsonData models.JSONData
 	if err := decoder.Decode(&jsonData); err != nil {
 		log.Panic().Err(err).Msg("can't read json system_config")
 	}
 
 	brokers := make([]string, len(jsonData.Brokers))
 	for i, broker := range jsonData.Brokers {
-		brokers[i] = broker.Address
+		brokers[i] = fmt.Sprintf("%s:%d", broker.Address, broker.Port)
 	}
 
 	cfg.BrokerCfg.Brokers = brokers
