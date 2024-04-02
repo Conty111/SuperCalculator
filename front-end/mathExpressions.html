@@ -1,0 +1,46 @@
+<div>
+    <h1>Math Expressions</h1>
+    <div id="expressions">
+        <!-- Здесь будут отображаться ранее введенные пользователем математические задачи -->
+    </div>
+    <div>
+        <input type="text" id="expressionInput" placeholder="Enter math expression">
+        <button onclick="sendExpression()" type="submit">Submit</button>
+    </div>
+</div>
+
+<script>
+    // Функция для отправки математического выражения на сервер
+    function sendExpression() {
+        const expression = document.getElementById('expressionInput').value;
+        // Ваш код для отправки запроса на сервер
+        // Пример использования fetch:
+        fetch('/api/mathExpressions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ expression: expression })
+        })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('Failed to send expression');
+                }
+            })
+            .then(data => {
+                // Обработка успешного ответа от сервера
+                console.log('Expression sent successfully:', data);
+                // Добавление отправленного выражения к отображаемым задачам
+                const expressionsContainer = document.getElementById('expressions');
+                const expressionElement = document.createElement('div');
+                expressionElement.textContent = expression;
+                expressionsContainer.appendChild(expressionElement);
+            })
+            .catch(error => {
+                // Обработка ошибки
+                console.error('Error sending expression:', error);
+            });
+    }
+</script>
