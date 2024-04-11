@@ -50,5 +50,5 @@ func (ctrl *Controller) GetStatus(ctx *gin.Context) {
 
 // DefineRoutes adds controller routes to the router
 func (ctrl *Controller) DefineRoutes(r gin.IRouter) {
-	r.GET("/", ctrl.GetStatus)
+	r.GET("", ctrl.GetStatus)
 }

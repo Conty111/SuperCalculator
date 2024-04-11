@@ -113,6 +113,6 @@ func (ctrl *Controller) HandleTask(ctx *gin.Context) {
 
 // DefineRoutes adds controller routes to the router
 func (ctrl *Controller) DefineRoutes(r gin.IRouter) {
-	r.POST("/execute", ctrl.HandleTask)
-	r.GET("/tasks", ctrl.GetTasks)
+	r.POST("", ctrl.HandleTask)
+	r.GET("", ctrl.GetTasks)
 }

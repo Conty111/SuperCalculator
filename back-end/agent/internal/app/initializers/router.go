@@ -36,7 +36,7 @@ func initializeMiddlewares(r gin.IRouter, appConfig *config.App) {
 
 func buildControllers(container *dependencies.Container) []apiv1.Controller {
 	return []apiv1.Controller{
-		apiv1Calculator.NewController(container.ExpressionSvc),
+		apiv1Calculator.NewController(container.Calculator),
 		apiv1Status.NewController(container.BuildInfo, container.Monitor),
 		apiv1Swagger.NewController(),
 	}

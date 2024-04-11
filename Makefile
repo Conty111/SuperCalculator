@@ -1,4 +1,4 @@
-PROJECT_PKG = gitlab.sch.ocrv.com.rzd/blockchain/platform/gobase
+PROJECT_PKG = github.com/Conty111/SuperCalculator
 BUILD_DIR = build
 VERSION ?=$(shell git describe --tags --exact-match 2>/dev/null || git symbolic-ref -q --short HEAD)
 COMMIT_HASH ?= $(shell git rev-parse --short HEAD 2>/dev/null)
@@ -7,7 +7,7 @@ BUILD_DATE ?= $(shell date +%FT%T%z)
 LDFLAGS += -s -w
 #LDFLAGS += -linkmode external -w -extldflags "-static"
 # inject build info
-LDFLAGS += -X ${PROJECT_PKG}/internal/app/build.Version=${VERSION} -X ${PROJECT_PKG}/internal/app/build.CommitHash=${COMMIT_HASH} -X ${PROJECT_PKG}/internal/app/build.BuildDate=${BUILD_DATE}
+#LDFLAGS += -X ${PROJECT_PKG}/internal/app/build.Version=${VERSION} -X ${PROJECT_PKG}/internal/app/build.CommitHash=${COMMIT_HASH} -X ${PROJECT_PKG}/internal/app/build.BuildDate=${BUILD_DATE}
 MOCKS_DESTINATION=test/mocks
 .PHONY: mocks
 
@@ -48,7 +48,7 @@ swagger:
 	swag init --parseDependency -g cmd/app/main.go --output=./api
 
 proto:
-	protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative pkg/grpc/schema/*.proto
+	protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative ./back-end/proto/*.proto
 
 
 install-tools:

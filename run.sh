@@ -5,4 +5,4 @@ num_agents=$(jq '.agents | length' system_config.json)
 
 # Установить количество агентов в переменную среды
 export AGENTS_COUNT=$num_agents
-docker-compose -f docker-compose-kafka.yml up -d
+docker compose -f docker-compose.yml up -d

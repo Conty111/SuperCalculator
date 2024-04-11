@@ -5,9 +5,8 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"     // swagger embed files
 	ginSwagger "github.com/swaggo/gin-swagger" // gin-swagger middleware
-
 	//nolint: golint //reason: blank import because of swagger docs init
-	_ "github.com/Conty111/SuperCalculator/back-end/agent/api/web"
+	//_ "github.com/Conty111/SuperCalculator/back-end/agent/api/web"
 )
 
 var (

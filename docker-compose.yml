@@ -13,19 +13,28 @@ services:
     ports:
       - "9092:9092"
     env_file:
-      - kafka.env
+      - enviroments/kafka.env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+    - zookeeper
 
   agent:
+    image: svc-agent
     build:
-      context: ./back-end/agent
-      dockerfile: Dockerfile
+      context: ./
+      dockerfile: DockerfileAgent
     container_name: agent
     depends_on:
       - kafka
     environment:
-      COUNT_AGENTS: ${COUNT_AGENTS}
+      AGENTS_COUNT: ${AGENTS_COUNT}
+    env_file:
+      - enviroments/agent.env
+      - enviroments/kafka.env
+      - enviroments/.env
+    entrypoint: "yes"
+#    command: "serve 0"
 
   db:
     image: postgres:latest
@@ -35,19 +44,27 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - ./data:/var/lib/postgresql/data
 
-  orchestrator:
+  orkestrator:
+    image: svc-orkestrator
     build:
-      context: ./back-end/orkestrator
-      dockerfile: Dockerfile
-    container_name: orchestrator
+      context: ./
+      dockerfile: DockerfileOrkestrator
+    container_name: orkestrator
     depends_on:
       - kafka
       - db
     environment:
-      COUNT_AGENTS: ${COUNT_AGENTS}
+      AGENTS_COUNT: ${AGENTS_COUNT}
+    env_file:
+      - enviroments/orkestrator.env
+      - enviroments/kafka.env
+      - enviroments/.env
+      - enviroments/docker.db.env
     ports:
       - "8000:8000"
+    entrypoint: "/app"
+    command: "serve"

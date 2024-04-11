@@ -4,9 +4,10 @@ import (
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/app/dependencies"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/config"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/controllers/apiv1"
+	apiv1AgentsManager "github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/controllers/apiv1/agents_manager"
 	apiv1Status "github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/controllers/apiv1/status"
 	apiv1Swagger "github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/controllers/apiv1/swagger"
-	apiv1Manager "github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/controllers/apiv1/tasks"
+	apiv1TasksManager "github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/controllers/apiv1/tasks"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/middleware"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/router"
 	"github.com/gin-gonic/gin"
@@ -38,6 +39,7 @@ func buildControllers(container *dependencies.Container) []apiv1.Controller {
 	return []apiv1.Controller{
 		apiv1Status.NewController(container.BuildInfo),
 		apiv1Swagger.NewController(),
-		apiv1Manager.NewController(container.TaskManager),
+		apiv1TasksManager.NewController(container.TaskManager),
+		apiv1AgentsManager.NewController(container.AgentManager),
 	}
 }

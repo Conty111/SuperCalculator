@@ -28,6 +28,9 @@ func NewServeCmd() *cobra.Command {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
+			if len(args) == 0 {
+				log.Fatal().Msg("agent id argument required")
+			}
 			num, err := strconv.Atoi(args[0])
 			if err != nil {
 				log.Fatal().Err(err).Msg("Invalid index argument")

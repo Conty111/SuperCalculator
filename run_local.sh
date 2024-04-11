@@ -18,10 +18,10 @@ source .env
 source kafka.env
 source agent.env
 source orkestrator.env
-export $(grep -v '^' .env | xargs)
-export $(grep -v '^' orkestrator.env | xargs)
-export $(grep -v '^' agent.env | xargs)
-export $(grep -v '^' kafka.env | xargs)
+export $(grep '^' .env | xargs)
+export $(grep '^' orkestrator.env | xargs)
+export $(grep '^' agent.env | xargs)
+export $(grep '^' kafka.env | xargs)
 
 # Запуск Kafka и приложения
 docker-compose -f docker-compose-kafka.yml up -d
