@@ -17,6 +17,7 @@ import (
 type Configuration struct {
 	App            App
 	HTTPConfig     HTTPConfig
+	GRPCConfig     GRPCConfig
 	BrokerCfg      BrokerConfig
 	JSONConfigPath string
 }
@@ -24,6 +25,11 @@ type Configuration struct {
 type App struct {
 	Name      string
 	LoggerCfg gin.LoggerConfig
+}
+
+type GRPCConfig struct {
+	Host string
+	Port string
 }
 
 type HTTPConfig struct {
@@ -63,7 +69,15 @@ func getFromEnv() *Configuration {
 	cfg.App = getAppConf()
 	cfg.HTTPConfig = getWebConf()
 	cfg.BrokerCfg = getConsumerConf()
+	cfg.GRPCConfig = getGrpcConf()
 
+	return cfg
+}
+
+func getGrpcConf() GRPCConfig {
+	var cfg GRPCConfig
+	cfg.Host = envy.Get("GRPC_HOST", "localhost")
+	cfg.Port = envy.Get("GRPC_PORT", "5000")
 	return cfg
 }
 
@@ -90,9 +104,11 @@ func setJSONconfig(cfg *Configuration, num int) {
 
 	cfg.App.Name = agentCfg.Name
 	cfg.HTTPConfig.Port = strconv.Itoa(agentCfg.HttpPort)
+
 	cfg.BrokerCfg.Partition = agentCfg.BrokerPartition
 	cfg.BrokerCfg.ConsumerGroup = agentCfg.ConsumerGroup
 	cfg.BrokerCfg.CommitInterval = agentCfg.BrokerCommitInterval
+	log.Print(jsonData)
 	brokers := make([]string, len(jsonData.Brokers))
 	for i, broker := range jsonData.Brokers {
 		brokers[i] = fmt.Sprintf("%s:%d", broker.Address, broker.Port)

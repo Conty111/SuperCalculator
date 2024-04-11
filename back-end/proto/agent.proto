@@ -1,0 +1,30 @@
+syntax = "proto3"; // версия proto файлов
+package agents_managment; // название пакета
+option go_package = "github.com/Conty111/SuperCalculator/back-end/proto";
+
+message AgentSettings {
+  float divisionDuration = 1;
+  float addDuration = 2;
+  float multiplyDuration = 3;
+  float subtractDuration = 4;
+}
+
+message AgentInfoRequest {}
+message AgentInfoResponse {
+  string name = 1;
+  int32 agentID = 2;
+  uint32 completedTasks = 3;
+  uint32 lastTaskID = 4;
+  AgentSettings settings = 5;
+}
+
+message SetAgentSettingsRequest {
+  AgentSettings settings = 1;
+}
+message SetAgentSettingsResponse {}
+
+// Определение сервиса с двумя методами
+service AgentGRPC {
+  rpc GetInfo (AgentInfoRequest) returns (AgentInfoResponse);
+  rpc SetSettings (SetAgentSettingsRequest) returns (SetAgentSettingsResponse);
+}

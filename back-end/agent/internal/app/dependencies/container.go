@@ -8,8 +8,8 @@ import (
 
 // Container is a DI container for application
 type Container struct {
-	BuildInfo     *build.Info
-	Config        *config.Configuration
-	Monitor       *services.Monitor
-	ExpressionSvc *services.CalculatorService
+	BuildInfo  *build.Info
+	Config     *config.Configuration
+	Monitor    *services.Monitor
+	Calculator *services.CalculatorService
 }

@@ -7,6 +7,11 @@ import (
 	"net/http"
 )
 
+type AgentResponse struct {
+	Body   map[string]interface{}
+	Status int
+}
+
 type ErrResponse struct {
 	Status string `json:"status"`
 	Error  string `json:"error"`

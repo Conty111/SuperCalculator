@@ -9,6 +9,7 @@ import (
 
 func InitializeConsumer(container *dependencies.Container) *kafka_broker.AppConsumer {
 	consumer, err := sarama.NewConsumer(container.Config.BrokerCfg.Brokers, container.Config.BrokerCfg.SaramaCfg)
+	log.Print(container.Config.BrokerCfg.Brokers)
 	if err != nil {
 		log.Panic().Err(err).Msg("Error creating Kafka consumer")
 	}
@@ -20,5 +21,5 @@ func InitializeConsumer(container *dependencies.Container) *kafka_broker.AppCons
 		log.Panic().Err(err).Msg("Error creating Kafka consumer")
 	}
 	log.Info().Str("Partition", string(container.Config.BrokerCfg.Partition)).Msg("started consumer")
-	return kafka_broker.NewAppConsumer(container.ExpressionSvc, con, container.Monitor)
+	return kafka_broker.NewAppConsumer(container.Calculator, con, container.Monitor)
 }

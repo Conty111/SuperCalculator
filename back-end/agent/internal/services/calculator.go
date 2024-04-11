@@ -57,6 +57,17 @@ func (es *CalculatorService) SetOperationDuration(settings *models.DurationSetti
 	es.AddTime = time.Millisecond * time.Duration(settings.AddDuration)
 }
 
+func (es *CalculatorService) GetSettings() *models.DurationSettings {
+	es.Locker.Lock()
+	defer es.Locker.Unlock()
+	return &models.DurationSettings{
+		DivisionDuration: float64(es.DivisionTime.Milliseconds()),
+		AddDuration:      float64(es.AddTime.Milliseconds()),
+		SubtractDuration: float64(es.SubtractionTime.Milliseconds()),
+		MultiplyDuration: float64(es.MultiplyTime.Milliseconds()),
+	}
+}
+
 // Calculate Calculating expression string
 func (es *CalculatorService) Calculate(expression string) (float64, error) {
 	rpn, err := es.infixToRPN(strings.TrimSpace(expression))

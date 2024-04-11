@@ -10,6 +10,11 @@ type AgentManager interface {
 	GetWorkersInfo() ([]map[string]interface{}, []int)
 }
 
+type AgentAPIClient interface {
+	GetAgentInfo()
+	SetSettings(settings *models.Settings)
+}
+
 type TaskManager interface {
 	GetAllTasks() ([]*models.TasksModel, error)
 	CreateTask(expression string) (*models.TasksModel, error)

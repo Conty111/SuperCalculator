@@ -10,7 +10,6 @@ import (
 	"io"
 	"net/http"
 	"strconv"
-	"sync"
 	"time"
 )
 
@@ -27,7 +26,31 @@ func (s *AgentManager) SetSettings(settings *models.Settings) ([]map[string]inte
 }
 
 func (s *AgentManager) GetWorkersInfo() ([]map[string]interface{}, []int) {
-	//TODO implement me
+	//wg := sync.WaitGroup{}
+	//wg.Add(len(s.Agents))
+	//
+	//responses := make([]*AgentResponse, len(s.Agents))
+	//for i, agent := range s.Agents {
+	//	agent := agent
+	//	i := i
+	//	go func() {
+	//		defer wg.Done()
+	//		res, status, err := s.GetAgentInfo(agent)
+	//		if err != nil {
+	//			log.Error().Err(err).Msg("failed to send request to the agent")
+	//			responses[i] = &AgentResponse{
+	//				Body:   nil,
+	//				Status: http.StatusInternalServerError,
+	//			}
+	//		}
+	//		responses[i] = &AgentResponse{
+	//			Body:   res,
+	//			Status: status,
+	//		}
+	//	}()
+	//}
+	//wg.Wait()
+	//return responses
 	panic("implement me")
 }
 
@@ -44,11 +67,9 @@ func NewAgentManager(
 }
 
 func (s *AgentManager) GetAgentInfo(
-	wg *sync.WaitGroup,
 	agent models.AgentConfig,
 ) (map[string]interface{}, int, error) {
 
-	defer wg.Done()
 	switch s.ApiType {
 	case enums.GrpcApi:
 		return nil, 0, nil
@@ -70,11 +91,8 @@ func (s *AgentManager) GetAgentInfo(
 }
 
 func (s *AgentManager) SetAgentsSettings(
-	wg *sync.WaitGroup,
 	settings models.Settings,
 	agent models.AgentConfig) (map[string]interface{}, int, error) {
-
-	defer wg.Done()
 
 	switch s.ApiType {
 	case enums.GrpcApi:

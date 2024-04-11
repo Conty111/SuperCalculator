@@ -8,13 +8,6 @@ import (
 	"time"
 )
 
-const (
-	// HTTPServerAddrEnv is an environment variable name for HTTP server address
-	HTTPServerAddrEnv = "HTTP_SERVER_ADDR"
-	// DefaultHTTPServerAddr  is a default value for HTTP server address
-	DefaultHTTPServerAddr = ":8000"
-)
-
 // InitializeHTTPServer create new http.Server instance
 func InitializeHTTPServer(router *gin.Engine, cfg *config.HTTPConfig) *http.Server {
 	// create http server

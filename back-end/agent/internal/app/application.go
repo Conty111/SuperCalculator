@@ -10,6 +10,8 @@ import (
 	kafka_broker "github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/kafka-broker"
 	"github.com/Conty111/SuperCalculator/back-end/models"
 	"github.com/rs/zerolog/log"
+	"google.golang.org/grpc"
+	"net"
 	"net/http"
 	"time"
 )
@@ -21,6 +23,7 @@ const maxAttemptCount = 3
 // Application is a main struct for the application that contains general information
 type Application struct {
 	httpServer *http.Server
+	grpcServer *grpc.Server
 	consumer   *kafka_broker.AppConsumer
 	producer   *kafka_broker.AppProducer
 	Container  *dependencies.Container
@@ -59,19 +62,21 @@ func BuildApplication(ctx context.Context) *Application {
 	monitor := initializers.InitializeMonitor(cfg.BrokerCfg.Partition, cfg.App.Name)
 	svc := initializers.InitializeExpressionService()
 	container := &dependencies.Container{
-		BuildInfo:     info,
-		Config:        cfg,
-		Monitor:       monitor,
-		ExpressionSvc: svc,
+		BuildInfo:  info,
+		Config:     cfg,
+		Monitor:    monitor,
+		Calculator: svc,
 	}
 
 	consumer := initializers.InitializeConsumer(container)
 	producer := initializers.InitializeProducer(container)
 	router := initializers.InitializeRouter(container)
-	server := initializers.InitializeHTTPServer(router, &cfg.HTTPConfig)
+	httpServer := initializers.InitializeHTTPServer(router, &cfg.HTTPConfig)
+	grpcServer := initializers.InitializeGRPCServer(container)
 
 	return &Application{
-		httpServer: server,
+		httpServer: httpServer,
+		grpcServer: grpcServer,
 		consumer:   consumer,
 		producer:   producer,
 		Container:  container,
@@ -84,6 +89,7 @@ func (a *Application) Start(ctx context.Context, cli bool) {
 		return
 	}
 	a.startHTTPServer()
+	a.startGRPCServer()
 	a.startProducer(a.startConsumer())
 }
 
@@ -101,6 +107,25 @@ func (a *Application) startHTTPServer() {
 
 		// service connections
 		if err := a.httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Panic().Err(err).Msg("HTTP Server stopped")
+		}
+	}()
+}
+
+func (a *Application) startGRPCServer() {
+	go func() {
+		addr := a.Container.Config.GRPCConfig.Host + ":" + a.Container.Config.GRPCConfig.Port
+
+		lis, err := net.Listen("tcp", addr)
+		if err != nil {
+			log.Panic().Err(err).Msg("failed to start grpc server")
+			return
+		}
+
+		log.Info().Str("GRPCServerAddress", addr).
+			Msg("started grpc server")
+
+		if err = a.grpcServer.Serve(lis); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Panic().Err(err).Msg("HTTP Server stopped")
 		}
 	}()

@@ -6,17 +6,27 @@ WORKDIR /src
 
 COPY ./back-end/models ./back-end/models
 COPY ./back-end/agent ./back-end/agent
-COPY .env .
-COPY kafka.env .
-COPY agent.env .
+COPY ./back-end/proto ./back-end/proto
+COPY ./system_config_docker.json system_config.json
+COPY go.mod .
+COPY go.sum .
+
+#COPY enviroments/.env .
+#COPY enviroments/kafka.env .
+#COPY enviroments/agent.env .
 COPY Makefile .
 
 RUN make build-agent
 
 # production stage
 FROM alpine:3.19.1
-COPY --from=builder /src/api ./api
+
+#COPY --from=builder /src/.env .
+#COPY --from=builder /src/kafka.env .
+#COPY --from=builder /src/agent.env .
 COPY --from=builder /src/agent_app app
+COPY --from=builder /src/system_config.json .
 
 RUN apk update && apk upgrade
 RUN apk add musl-dev && apk add libc6-compat
+RUN chmod +x app
