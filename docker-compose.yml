@@ -58,6 +58,7 @@ services:
       - kafka
       - db
     environment:
+      DB_USER: postgres
       AGENTS_COUNT: ${AGENTS_COUNT}
     env_file:
       - enviroments/orkestrator.env

@@ -50,6 +50,9 @@ type App struct {
 	TimeToRetry     time.Duration
 	Agents          []models.AgentConfig
 	ApiToUse        enums.ApiType
+	AuthPublicKeyPath  string
+	AuthPrivateKeyPath string
+	TokenTTL time.Duration
 }
 
 type HTTPConfig struct {
@@ -99,7 +102,7 @@ func setJSONconfig(cfg *Configuration) {
 func getFromEnv() *Configuration {
 	var cfg = &Configuration{}
 
-	err := envy.Load(".env", "orkestrator.env", "kafka.env")
+	err := envy.Load("enviroments/.env", "enviroments/db.env", "enviroments/orkestrator.env", "enviroments/orkestrator.env")
 	if err != nil {
 		log.Panic().Err(err).Msg("cannot load env files")
 	}
@@ -156,6 +159,14 @@ func getAppConf() *App {
 	cfg.ApiToUse = apiType
 	cfg.TimeToRetry = time.Duration(tRetry) * time.Second
 	cfg.TimeoutResponse = time.Duration(tResp) * time.Second
+	cfg.AuthPublicKeyPath = envy.Get("AUTH_PUBLIC_KEY_PATH", "")
+	cfg.AuthPrivateKeyPath = envy.Get("AUTH_PRIVATE_KEY_PATH", "")
+	ttl, err := strconv.Atoi(envy.Get("TOKEN_TTL", "700900"))
+	if err != nil {
+		log.Info().Msg("failed to parse token TTL from env, setting default value")
+		ttl = 700
+	}
+	cfg.TokenTTL = time.Second * time.Duration(ttl)
 
 	return &cfg
 }

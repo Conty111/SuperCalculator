@@ -56,18 +56,6 @@ install-tools:
 	go install github.com/swaggo/swag/cmd/swag
 
 gen-keys:
-	mkdir -p cert
-	openssl ecparam -name prime256v1 -genkey -noout -out cert/ec-prime256v1-priv-key.pem
-	openssl ec -in cert/ec-prime256v1-priv-key.pem -pubout > cert/ec-prime256v1-pub-key.pem
-
-migrations-up:
-	migrate -source file://db/migrations -database postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable up
-
-migrations-down:
-	migrate -source file://db/migrations -database postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable down
-
-migrations-up-locally:
-	migrate -source file://db/migrations -database postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable up
-
-migrations-down-locally:
-	migrate -source file://db/migrations -database postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable down
+	mkdir -p  back-end/cert
+	openssl ecparam -name prime256v1 -genkey -noout -out back-end/cert/ec-prime256v1-priv-key.pem
+	openssl ec -in  back-end/cert/ec-prime256v1-priv-key.pem -pubout >  back-end/cert/ec-prime256v1-pub-key.pem

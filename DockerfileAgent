@@ -10,11 +10,8 @@ COPY ./back-end/proto ./back-end/proto
 COPY ./system_config_docker.json system_config.json
 COPY go.mod .
 COPY go.sum .
-
-#COPY enviroments/.env .
-#COPY enviroments/kafka.env .
-#COPY enviroments/agent.env .
 COPY Makefile .
+COPY ./enviroments ./enviroments
 
 RUN make build-agent
 
@@ -26,6 +23,7 @@ FROM alpine:3.19.1
 #COPY --from=builder /src/agent.env .
 COPY --from=builder /src/agent_app app
 COPY --from=builder /src/system_config.json .
+COPY --from=builder /src/enviroments ./enviroments
 
 RUN apk update && apk upgrade
 RUN apk add musl-dev && apk add libc6-compat
