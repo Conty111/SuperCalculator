@@ -8,7 +8,7 @@ import (
 // InitializeEnvs intializes envy
 func InitializeEnvs() {
 	if err := envy.Load(); err != nil {
-		log.Info().Err(err).Msg("can not load .env file")
+		log.Error().Err(err).Msg("can not load env files")
 
 		envy.Reload()
 	}
