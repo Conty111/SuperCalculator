@@ -6,7 +6,6 @@ import (
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/helpers"
 	webHelpers "github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/helpers"
 	"github.com/cristalhq/jwt/v5"
-	"github.com/gofrs/uuid"
 	"time"
 )
 
@@ -28,9 +27,9 @@ func NewAuth(appCfg *config.App) (*Auth, error) {
 	return &Auth{TokenBuilder: tokenBuilder, HashHelper: hashHelper, TokenTTL: appCfg.TokenTTL}, nil
 }
 
-func (a *Auth) BuildToken(userID uuid.UUID) (*jwt.Token, error) {
+func (a *Auth) BuildToken(userID uint) (*jwt.Token, error) {
 	tokenData := models.Token{
-		UserID:  userID.String(),
+		UserID:  userID,
 		Expires: time.Now().Add(a.TokenTTL),
 	}
 	return a.TokenBuilder.Build(tokenData)

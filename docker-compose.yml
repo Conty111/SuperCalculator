@@ -80,7 +80,7 @@ services:
     volumes:
       - ./back-end/cert:/back-end/cert
     ports:
-      - "8000:8001"
+      - "8000:8000"
 #    entrypoint: sh -c "while true; do sleep 3600; done"
     entrypoint: "/app"
     command: "serve"
@@ -89,4 +89,4 @@ services:
 
 networks:
   svc-network:
-    external: true
+#    external: true

@@ -3,11 +3,13 @@ package initializers
 import (
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/app/dependencies"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/config"
+	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/services"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/controllers/apiv1"
 	apiv1AgentsManager "github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/controllers/apiv1/agents_manager"
 	apiv1Status "github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/controllers/apiv1/status"
 	apiv1Swagger "github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/controllers/apiv1/swagger"
 	apiv1TasksManager "github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/controllers/apiv1/tasks"
+	apiv1User "github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/controllers/apiv1/user"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/middleware"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/router"
 	"github.com/gin-gonic/gin"
@@ -32,7 +34,7 @@ func InitializeRouter(container *dependencies.Container) *gin.Engine {
 
 func initializeMiddlewares(r gin.IRouter, appConfig *config.App) {
 	r.Use(middleware.LoggerWithConfig(appConfig.LoggerCfg, log.Logger))
-	//r.Use(middleware.TokenAuthMiddleware(appConfig.AuthPublicKeyPath))
+	r.Use(middleware.TokenAuthMiddleware(appConfig.AuthPublicKeyPath))
 	r.Use(middleware.Recovery())
 }
 
@@ -40,6 +42,7 @@ func buildControllers(container *dependencies.Container) []apiv1.Controller {
 	return []apiv1.Controller{
 		apiv1Status.NewController(container.BuildInfo),
 		apiv1Swagger.NewController(),
+		apiv1User.NewController(services.NewUserService(container.UserManager, container.AuthManager)),
 		apiv1TasksManager.NewController(container.TaskManager),
 		apiv1AgentsManager.NewController(container.AgentManager),
 	}
