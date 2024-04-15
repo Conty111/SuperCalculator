@@ -3,11 +3,12 @@ package interfaces
 import (
 	"context"
 	"github.com/Conty111/SuperCalculator/back-end/models"
+	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/helpers"
 )
 
 type AgentManager interface {
-	SetSettings(settings *models.Settings) ([]map[string]interface{}, []int)
-	GetWorkersInfo() ([]map[string]interface{}, []int)
+	SetSettings(settings *models.Settings) []*helpers.AgentResponse
+	GetWorkersInfo() []*helpers.AgentResponse
 }
 
 type AgentAPIClient interface {

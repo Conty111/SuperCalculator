@@ -108,7 +108,6 @@ func setJSONconfig(cfg *Configuration, num int) {
 	cfg.BrokerCfg.Partition = agentCfg.BrokerPartition
 	cfg.BrokerCfg.ConsumerGroup = agentCfg.ConsumerGroup
 	cfg.BrokerCfg.CommitInterval = agentCfg.BrokerCommitInterval
-	log.Print(jsonData)
 	brokers := make([]string, len(jsonData.Brokers))
 	for i, broker := range jsonData.Brokers {
 		brokers[i] = fmt.Sprintf("%s:%d", broker.Address, broker.Port)

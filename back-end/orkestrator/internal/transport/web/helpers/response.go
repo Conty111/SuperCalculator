@@ -8,8 +8,8 @@ import (
 )
 
 type AgentResponse struct {
-	Body   map[string]interface{}
-	Status int
+	Body   map[string]interface{} `json:"body"`
+	Status int                    `json:"status"`
 }
 
 type ErrResponse struct {

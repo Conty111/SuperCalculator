@@ -6,18 +6,22 @@ services:
     container_name: zookeeper
     ports:
       - "2181:2181"
+    networks:
+      - svc-network
 
   kafka:
     image: wurstmeister/kafka:latest
     container_name: kafka
     ports:
-      - "9092:9092"
+      - "29092:29092"
     env_file:
       - enviroments/kafka.env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
     - zookeeper
+    networks:
+      - svc-network
 
   agent:
     image: svc-agent
@@ -25,6 +29,7 @@ services:
       context: ./
       dockerfile: DockerfileAgent
     container_name: agent
+    restart: on-failure
     depends_on:
       - kafka
     environment:
@@ -33,8 +38,11 @@ services:
       - enviroments/agent.env
       - enviroments/kafka.env
       - enviroments/.env
-    entrypoint: "yes"
-#    command: "serve 0"
+#    entrypoint: "yes"
+    entrypoint: "/app"
+    command: "serve 0"
+    networks:
+      - svc-network
 
   db:
     image: postgres:latest
@@ -45,8 +53,10 @@ services:
       POSTGRES_DB: postgres
     ports:
       - "5433:5432"
-    volumes:
-      - ./data:/var/lib/postgresql/data
+#    volumes:
+#      - ./data:/var/lib/postgresql/data
+    networks:
+      - svc-network
 
   orkestrator:
     image: svc-orkestrator
@@ -54,18 +64,29 @@ services:
       context: ./
       dockerfile: DockerfileOrkestrator
     container_name: orkestrator
+    restart: on-failure
     depends_on:
       - kafka
       - db
     environment:
       DB_USER: postgres
       AGENTS_COUNT: ${AGENTS_COUNT}
+      GOPROXY: http://172.22.100.212:88,direct
     env_file:
       - enviroments/orkestrator.env
       - enviroments/kafka.env
       - enviroments/.env
       - enviroments/docker.db.env
+    volumes:
+      - ./back-end/cert:/back-end/cert
     ports:
-      - "8000:8000"
+      - "8000:8001"
+#    entrypoint: sh -c "while true; do sleep 3600; done"
     entrypoint: "/app"
     command: "serve"
+    networks:
+      - svc-network
+
+networks:
+  svc-network:
+    external: true

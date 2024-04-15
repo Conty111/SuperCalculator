@@ -78,7 +78,7 @@ func (a *Application) Start(ctx context.Context, cli bool) {
 	if cli {
 		return
 	}
-	a.Container.Consumer.Start()
+	go a.Container.Consumer.Start()
 	a.Container.Producer.Start()
 	a.Container.TaskManager.Start(ctx)
 	a.startHTTPServer()
