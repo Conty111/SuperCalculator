@@ -17,4 +17,6 @@ type Container struct {
 	Producer     *kafka_broker.AppProducer
 	TaskManager  interfaces.TaskManager
 	AgentManager interfaces.AgentManager
+	UserManager  interfaces.UserManager
+	AuthManager  interfaces.AuthManager
 }

@@ -13,8 +13,9 @@ import (
 func InitMigrations(db *gorm.DB) {
 	var (
 		tasks models.TasksModel
+		users models.User
 	)
-	err := db.AutoMigrate(&tasks)
+	err := db.AutoMigrate(&tasks, &users)
 	if err != nil {
 		log.Panic().Err(err).Msg("Cannot run auto migrations")
 	}

@@ -5,7 +5,7 @@
   "agents": [
     {
       "name": "agent1",
-      "address": "localhost",
+      "address": "0.0.0.0",
       "broker_partition": 0,
       "consumer_group": "agents",
       "broker_commit_interval": 1,
@@ -14,7 +14,7 @@
     },
     {
       "name": "agent2",
-      "address": "localhost",
+      "address": "0.0.0.0",
       "broker_partition": 0,
       "consumer_group": "agents",
       "broker_commit_interval": 1,
