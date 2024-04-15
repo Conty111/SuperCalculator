@@ -9,7 +9,6 @@ import (
 
 func InitializeConsumer(container *dependencies.Container) *kafka_broker.AppConsumer {
 	consumer, err := sarama.NewConsumer(container.Config.BrokerCfg.Brokers, container.Config.BrokerCfg.SaramaCfg)
-	log.Print(container.Config.BrokerCfg.Brokers)
 	if err != nil {
 		log.Panic().Err(err).Msg("Error creating Kafka consumer")
 	}

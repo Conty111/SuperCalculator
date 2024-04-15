@@ -32,7 +32,7 @@ func InitializeRouter(container *dependencies.Container) *gin.Engine {
 
 func initializeMiddlewares(r gin.IRouter, appConfig *config.App) {
 	r.Use(middleware.LoggerWithConfig(appConfig.LoggerCfg, log.Logger))
-	r.Use((middleware.TokenAuthMiddleware(appConfig.AuthPublicKeyPath)))
+	//r.Use(middleware.TokenAuthMiddleware(appConfig.AuthPublicKeyPath))
 	r.Use(middleware.Recovery())
 }
 

@@ -1,6 +1,6 @@
 {
   "brokers": [
-    {"address": "localhost", "port":  9092}
+    {"address": "localhost", "port":  29092}
   ],
   "agents": [
     {

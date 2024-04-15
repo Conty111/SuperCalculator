@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"github.com/Conty111/SuperCalculator/back-end/models"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/enums"
+	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/helpers"
 	"github.com/rs/zerolog/log"
 	"io"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -20,38 +22,39 @@ type AgentManager struct {
 	HTTPClient      http.Client
 }
 
-func (s *AgentManager) SetSettings(settings *models.Settings) ([]map[string]interface{}, []int) {
+func (s *AgentManager) SetSettings(settings *models.Settings) []*helpers.AgentResponse {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s *AgentManager) GetWorkersInfo() ([]map[string]interface{}, []int) {
-	//wg := sync.WaitGroup{}
-	//wg.Add(len(s.Agents))
-	//
-	//responses := make([]*AgentResponse, len(s.Agents))
-	//for i, agent := range s.Agents {
-	//	agent := agent
-	//	i := i
-	//	go func() {
-	//		defer wg.Done()
-	//		res, status, err := s.GetAgentInfo(agent)
-	//		if err != nil {
-	//			log.Error().Err(err).Msg("failed to send request to the agent")
-	//			responses[i] = &AgentResponse{
-	//				Body:   nil,
-	//				Status: http.StatusInternalServerError,
-	//			}
-	//		}
-	//		responses[i] = &AgentResponse{
-	//			Body:   res,
-	//			Status: status,
-	//		}
-	//	}()
-	//}
-	//wg.Wait()
+func (s *AgentManager) GetWorkersInfo() []*helpers.AgentResponse {
+	wg := sync.WaitGroup{}
+	wg.Add(len(s.Agents))
+
+	responses := make([]*helpers.AgentResponse, len(s.Agents))
+	for i, agent := range s.Agents {
+		agent := agent
+		i := i
+		go func() {
+			defer wg.Done()
+			res, status, err := s.GetAgentInfo(agent)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to send request to the agent")
+				responses[i] = &helpers.AgentResponse{
+					Body:   nil,
+					Status: http.StatusInternalServerError,
+				}
+			}
+			responses[i] = &helpers.AgentResponse{
+				Body:   res,
+				Status: status,
+			}
+		}()
+	}
+	wg.Wait()
+	return responses
 	//return responses
-	panic("implement me")
+	//panic("implement me")
 }
 
 func NewAgentManager(
@@ -80,7 +83,7 @@ func (s *AgentManager) GetAgentInfo(
 		body, status, err := sendHTTPRequest(
 			&client,
 			nil,
-			fmt.Sprintf("%s/status", agent.Address+strconv.Itoa(agent.HttpPort)),
+			fmt.Sprintf("%s/api/v1/status", agent.Address+":"+strconv.Itoa(agent.HttpPort)),
 			http.MethodGet,
 		)
 		if err != nil {
@@ -109,7 +112,7 @@ func (s *AgentManager) SetAgentsSettings(
 		body, status, err := sendHTTPRequest(
 			&client,
 			bytes.NewReader(reqBody),
-			fmt.Sprintf("%s/calculator", agent.Address+strconv.Itoa(agent.HttpPort)),
+			fmt.Sprintf("%s/calculator", agent.Address+":"+strconv.Itoa(agent.HttpPort)),
 			http.MethodPut,
 		)
 		if err != nil {

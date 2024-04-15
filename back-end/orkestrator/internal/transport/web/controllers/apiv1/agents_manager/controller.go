@@ -47,10 +47,9 @@ func (ctrl *Controller) SetSettings(ctx *gin.Context) {
 		helpers.WriteErrResponse(ctx, err)
 		return
 	}
-	responses, statuses := ctrl.Service.SetSettings(&body)
+	responses := ctrl.Service.SetSettings(&body)
 	ctx.JSON(http.StatusOK, &WorkersListResponse{
-		Status:    http.StatusText(http.StatusOK),
-		Responses: serializeWorkersResponse(responses, statuses),
+		Responses: responses,
 	})
 }
 
@@ -63,23 +62,22 @@ func (ctrl *Controller) SetSettings(ctx *gin.Context) {
 // @Success 200 {object} WorkersInfoResponse
 // @Router /api/v1/tasks/workers [get]
 func (ctrl *Controller) GetWorkersInfo(ctx *gin.Context) {
-	responses, statuses := ctrl.Service.GetWorkersInfo()
+	responses := ctrl.Service.GetWorkersInfo()
 	ctx.JSON(http.StatusOK, &WorkersListResponse{
-		Status:    http.StatusText(http.StatusOK),
-		Responses: serializeWorkersResponse(responses, statuses),
+		Responses: responses,
 	})
 }
 
-func serializeWorkersResponse(responses []map[string]interface{}, statuses []int) []WorkerResponse {
-	workersResponses := make([]WorkerResponse, len(responses))
-	for i, resp := range responses {
-		workersResponses[i] = WorkerResponse{
-			Status:   http.StatusText(statuses[i]),
-			Response: resp,
-		}
-	}
-	return workersResponses
-}
+//func serializeWorkersResponse(responses []map[string]interface{}, statuses []int) []WorkerResponse {
+//	workersResponses := make([]WorkerResponse, len(responses))
+//	for i, resp := range responses {
+//		workersResponses[i] = WorkerResponse{
+//			Status:   http.StatusText(statuses[i]),
+//			Response: resp,
+//		}
+//	}
+//	return workersResponses
+//}
 
 // DefineRoutes adds controller routes to the router
 func (ctrl *Controller) DefineRoutes(r gin.IRouter) {
