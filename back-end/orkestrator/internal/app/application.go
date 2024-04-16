@@ -60,11 +60,12 @@ func BuildApplication() *Application {
 	}
 
 	container.Producer = initializers.InitializeProducer(container)
+	container.Consumer = initializers.InitializeConsumer(container)
+
 	container.TaskManager = initializers.InitializeTaskManager(container)
 	container.AgentManager = initializers.InitializeAgentManager(container)
 	container.UserManager = initializers.InitializeUserManager(container)
 	container.AuthManager = initializers.InitializeAuthManager(container)
-	container.Consumer = initializers.InitializeConsumer(container)
 
 	router := initializers.InitializeRouter(container)
 	server := initializers.InitializeHTTPServer(router, cfg.HTTPConfig)

@@ -6,6 +6,7 @@ import (
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/controllers/apiv1"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/helpers"
 	"github.com/gin-gonic/gin"
+	"go/types"
 	"net/http"
 )
 
@@ -48,7 +49,7 @@ func (ctrl *Controller) SetSettings(ctx *gin.Context) {
 		return
 	}
 	responses := ctrl.Service.SetSettings(&body)
-	ctx.JSON(http.StatusOK, &WorkersListResponse{
+	ctx.JSON(http.StatusOK, &WorkersListResponse[types.Nil]{
 		Responses: responses,
 	})
 }
@@ -63,21 +64,10 @@ func (ctrl *Controller) SetSettings(ctx *gin.Context) {
 // @Router /api/v1/tasks/workers [get]
 func (ctrl *Controller) GetWorkersInfo(ctx *gin.Context) {
 	responses := ctrl.Service.GetWorkersInfo()
-	ctx.JSON(http.StatusOK, &WorkersListResponse{
+	ctx.JSON(http.StatusOK, &WorkersListResponse[*models.AgentInfo]{
 		Responses: responses,
 	})
 }
-
-//func serializeWorkersResponse(responses []map[string]interface{}, statuses []int) []WorkerResponse {
-//	workersResponses := make([]WorkerResponse, len(responses))
-//	for i, resp := range responses {
-//		workersResponses[i] = WorkerResponse{
-//			Status:   http.StatusText(statuses[i]),
-//			Response: resp,
-//		}
-//	}
-//	return workersResponses
-//}
 
 // DefineRoutes adds controller routes to the router
 func (ctrl *Controller) DefineRoutes(r gin.IRouter) {

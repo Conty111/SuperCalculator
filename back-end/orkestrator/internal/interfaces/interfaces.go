@@ -5,17 +5,18 @@ import (
 	"github.com/Conty111/SuperCalculator/back-end/models"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/helpers"
 	"github.com/cristalhq/jwt/v5"
+	"go/types"
 	"time"
 )
 
 type AgentManager interface {
-	SetSettings(settings *models.Settings) []*helpers.AgentResponse
-	GetWorkersInfo() []*helpers.AgentResponse
+	SetSettings(settings *models.Settings) []*helpers.AgentResponse[types.Nil]
+	GetWorkersInfo() []*helpers.AgentResponse[*models.AgentInfo]
 }
 
 type AgentAPIClient interface {
-	GetAgentInfo(agent models.AgentConfig) (models.AgentInfo, error)
-	SetAgentSettings(settings models.Settings, agent models.AgentConfig) error
+	GetAgentInfo(agent *models.AgentConfig) (*models.AgentInfo, error)
+	SetAgentSettings(settings *models.Settings, agent *models.AgentConfig) error
 }
 
 type TaskManager interface {

@@ -37,6 +37,7 @@ func InitializeAgentManager(container *dependencies.Container) interfaces.AgentM
 		client,
 	)
 }
+
 func InitializeUserManager(container *dependencies.Container) interfaces.UserManager {
 	return repository.NewUserRepository(container.Database)
 }
@@ -44,7 +45,7 @@ func InitializeUserManager(container *dependencies.Container) interfaces.UserMan
 func InitializeAuthManager(container *dependencies.Container) interfaces.AuthManager {
 	authManager, err := auth.NewAuth(container.Config.App)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to initialize auth manager")
+		log.Panic().Err(err).Msg("failed to initialize auth manager")
 		return nil
 	}
 	return authManager
