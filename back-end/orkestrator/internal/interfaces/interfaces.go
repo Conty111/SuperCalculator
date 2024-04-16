@@ -14,8 +14,8 @@ type AgentManager interface {
 }
 
 type AgentAPIClient interface {
-	GetAgentInfo()
-	SetSettings(settings *models.Settings)
+	GetAgentInfo(agent models.AgentConfig) (models.AgentInfo, error)
+	SetAgentSettings(settings models.Settings, agent models.AgentConfig) error
 }
 
 type TaskManager interface {

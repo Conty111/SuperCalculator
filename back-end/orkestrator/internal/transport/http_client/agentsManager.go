@@ -22,9 +22,9 @@ func NewAgentHTTPClient(timeout time.Duration) *AgentHTTPClient {
 	}
 }
 
-func (s *AgentHTTPClient) GetAgentInfo(agent models.AgentConfig) (map[string]interface{}, int, error) {
+func (s *AgentHTTPClient) GetAgentInfo(agent models.AgentConfig) (models.AgentInfo, error) {
 
-	body, status, err := sendHTTPRequest(
+	_, _, err := sendHTTPRequest(
 		s.HTTPClient,
 		nil,
 		fmt.Sprintf("%s/status", agent.Address+strconv.Itoa(agent.HttpPort)),
@@ -32,16 +32,17 @@ func (s *AgentHTTPClient) GetAgentInfo(agent models.AgentConfig) (map[string]int
 	)
 
 	if err != nil {
-		return nil, http.StatusInternalServerError, err
+		return models.AgentInfo{}, err
 	}
-	return body, status, nil
+	panic("implement get agent info http")
+	//return body, status, nil
 }
 
-func (s *AgentHTTPClient) SetAgentSettings(settings models.Settings, agent models.AgentConfig) (map[string]interface{}, int, error) {
+func (s *AgentHTTPClient) SetAgentSettings(settings models.Settings, agent models.AgentConfig) error {
 	reqBody, err := json.Marshal(settings.DurationSettings)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to marshal duration settings")
-		return nil, http.StatusInternalServerError, err
+		return err
 	}
 	body, status, err := sendHTTPRequest(
 		s.HTTPClient,
@@ -50,9 +51,10 @@ func (s *AgentHTTPClient) SetAgentSettings(settings models.Settings, agent model
 		http.MethodPut,
 	)
 	if err != nil {
-		return nil, http.StatusInternalServerError, err
+		return err
 	}
-	return body, status, nil
+	log.Info().Any("body", body).Str("status", http.StatusText(status))
+	return nil
 }
 
 // sendHTTPRequestToAgent sends request and returns body and status
