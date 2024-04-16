@@ -40,7 +40,7 @@ type UserManager interface {
 	GetUserByEmail(userEmail string) (*models.User, error)
 	UserEmailExists(userEmail string) (bool, error)
 	UserExists(userID uint) (bool, error)
-	UpdateUser(user *models.User, param, value string) error
+	UpdateUser(user *models.User, param string, value interface{}) error
 	DeleteUser(user *models.User) error
 	GetLastID() (uint, error)
 	GetAllUsers(callerID uint) ([]*models.User, error)

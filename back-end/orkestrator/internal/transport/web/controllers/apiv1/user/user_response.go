@@ -1,10 +1,6 @@
 package user
 
-import (
-	"gitlab.sch.ocrv.com.rzd/blockchain/trainees/quiz-svc/internal/enums"
-	"gitlab.sch.ocrv.com.rzd/blockchain/trainees/quiz-svc/internal/web/helpers"
-	"gitlab.sch.ocrv.com.rzd/blockchain/trainees/quiz-svc/internal/web/serializers"
-)
+import "github.com/Conty111/SuperCalculator/back-end/models"
 
 type MsgResponse struct {
 	Status  string `json:"status"`
@@ -12,43 +8,26 @@ type MsgResponse struct {
 	UserID  uint   `json:"user_id"`
 }
 
-// Response is a declaration for a user response
-type Response struct {
-	Status string `json:"status"`
-	serializers.Info
+type UserInfo struct {
+	Username string      `json:"username"`
+	Email    string      `json:"email"`
+	Role     models.Role `json:"role"`
 }
 
-// SuperUserResponse is a declaration for response to a superuser
-type SuperUserResponse struct {
+// UserResponse is a declaration for a common user response
+type UserResponse struct {
 	Status string `json:"status"`
-	Info   serializers.VerboseInfo
+	UserInfo
+}
+
+type UsersListResponse struct {
+	Status string     `json:"status"`
+	Users  []UserInfo `json:"users"`
 }
 
 // AuthResponse is a declaration for an auth response
 type AuthResponse struct {
-	Status string      `json:"status"`
-	Role   enums.Role  `json:"role"`
-	Theme  enums.Theme `json:"theme"`
-	Token  string      `json:"token"`
-}
-
-// AllUsersResponse is a declaration for an all users response
-type AllUsersResponse struct {
-	Status     string                 `json:"status"`
-	Pagination helpers.PaginationInfo `json:"pagination"`
-	Data       []*serializers.Info    `json:"users"`
-}
-
-/////////////////////////////////// Responses for the embedded resources /////////////////////////////////////////
-
-type AttachedQuizzesResponse struct {
-	Status     string                               `json:"status"`
-	Pagination helpers.PaginationInfo               `json:"pagination"`
-	Data       []*serializers.ShortUserAttachedQuiz `json:"attachedQuizzes"`
-}
-
-type CreatedQuizzesResponse struct {
-	Status     string                   `json:"status"`
-	Pagination helpers.PaginationInfo   `json:"pagination"`
-	Data       []*serializers.ShortQuiz `json:"createdQuizzes"`
+	Status string `json:"status"`
+	Token  string `json:"token"`
+	UserInfo
 }

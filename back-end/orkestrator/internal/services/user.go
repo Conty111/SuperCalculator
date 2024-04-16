@@ -14,7 +14,6 @@ import (
 var notAllowedFieldsToUpdate = []string{
 	"Password",
 	"Email",
-	"Role",
 }
 
 type UserService struct {
@@ -92,7 +91,7 @@ func (s *UserService) GetUserByEmail(userEmail string) (*models.User, error) {
 }
 
 // UpdateUserParamByID updates param of the user with provided userID with value or returns an error if the record is not found
-func (s *UserService) UpdateUserParamByID(userID uint, param, value string, callerID uint) error {
+func (s *UserService) UpdateUserParamByID(userID uint, param string, value interface{}, callerID uint) error {
 	err := s.isCallerAdmin(callerID)
 	if err != nil {
 		return err
@@ -106,7 +105,7 @@ func (s *UserService) UpdateUserParamByID(userID uint, param, value string, call
 		return clierrs.ErrUserNotFound
 	}
 
-	if !slices.Contains(notAllowedFieldsToUpdate, param) {
+	if slices.Contains(notAllowedFieldsToUpdate, param) {
 		return clierrs.ErrUpdateForbidden
 	}
 
@@ -148,7 +147,7 @@ func (s *UserService) Login(email, password string) (*models.User, *jwt.Token, e
 		return nil, nil, err
 	}
 	if !userExists {
-		return nil, nil, clierrs.ErrInvalidCredentials
+		return nil, nil, clierrs.ErrUserNotFound
 	}
 
 	user, err := s.UserRepo.GetUserByEmail(email)

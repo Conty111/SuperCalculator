@@ -1,11 +1,11 @@
 package user
 
-import "gitlab.sch.ocrv.com.rzd/blockchain/trainees/quiz-svc/internal/web/helpers"
+import "github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/helpers"
 
 // ResponseDoc is a response declaration for documentation purposes
 type ResponseDoc struct {
 	Data struct {
-		Attributes Response `json:"attributes"`
+		Attributes MsgResponse `json:"attributes"`
 	} `json:"data"`
 }
 
