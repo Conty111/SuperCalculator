@@ -6,7 +6,7 @@ import (
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/helpers"
 	"github.com/cristalhq/jwt/v5"
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog/log"
+	"net/http"
 	"strconv"
 )
 
@@ -16,7 +16,7 @@ var (
 
 type Service interface {
 	GetUserByID(userID, callerID uint) (*models.User, error)
-	UpdateUserParamByID(userID uint, param, value string, callerID uint) error
+	UpdateUserParamByID(userID uint, param string, value interface{}, callerID uint) error
 	DeleteUserByID(userID uint, callerID uint) error
 	GetAllUsers(callerID uint) ([]*models.User, error)
 
@@ -70,19 +70,15 @@ func (ctrl *Controller) GetUser(ctx *gin.Context) {
 		helpers.WriteErrResponse(ctx, err)
 		return
 	}
-	log.Debug().Any("user", user).Msg("Get User")
 
-	//ctx.JSON(http.StatusOK, &SuperUserResponse{
-	//	Status: http.StatusText(http.StatusOK),
-	//	Info: serializers.VerboseInfo{
-	//		ID:       user.ID,
-	//		UID:      user.UID,
-	//		FullName: user.FullName,
-	//		Email:    user.Email,
-	//		Role:     user.Role,
-	//		Theme:    user.Theme,
-	//	},
-	//})
+	ctx.JSON(http.StatusOK, &UserResponse{
+		Status: http.StatusText(http.StatusOK),
+		UserInfo: UserInfo{
+			Role:     user.Role,
+			Username: user.Username,
+			Email:    user.Email,
+		},
+	})
 }
 
 // CreateUser godoc
@@ -110,13 +106,21 @@ func (ctrl *Controller) CreateUser(ctx *gin.Context) {
 		helpers.WriteErrResponse(ctx, err)
 		return
 	}
-	log.Debug().Any("token", token).Msg("Get User")
-	//ctx.JSON(http.StatusCreated, &AuthResponse{
-	//	Status: http.StatusText(http.StatusOK),
-	//	Role:   user.Role,
-	//	Theme:  user.Theme,
-	//	Token:  token.String(),
-	//})
+
+	ctx.JSON(http.StatusCreated, &AuthResponse{
+		Status: http.StatusText(http.StatusOK),
+		Token:  token.String(),
+		UserInfo: UserInfo{
+			Role:     user.Role,
+			Username: user.Username,
+			Email:    user.Username,
+		},
+	})
+}
+
+type Upd struct {
+	Param string      `json:"param"`
+	Value interface{} `json:"value"`
 }
 
 // UpdateUser godoc
@@ -132,32 +136,32 @@ func (ctrl *Controller) CreateUser(ctx *gin.Context) {
 // @Failure 400 {object} helpers.ErrResponse
 // @Failure 403 {object} helpers.ErrResponse
 // @Router /api/v1/users/:userID [patch]
-//func (ctrl *Controller) UpdateUser(ctx *gin.Context) {
-//	userID, err := strconv.Atoi(ctx.Param("userID"))
-//	if err != nil {
-//		helpers.WriteErrResponse(ctx, err)
-//		return
-//	}
-//	callerID := ctx.GetUint("callerID")
-//
-//	var upd helpers.Upd
-//	err = ctx.ShouldBind(&upd)
-//	if err != nil {
-//		helpers.WriteErrResponse(ctx, err)
-//		return
-//	}
-//
-//	err = ctrl.Service.UpdateUserParamByID(userID, upd.Param, upd.Value, callerID)
-//	if err != nil {
-//		helpers.WriteErrResponse(ctx, err)
-//		return
-//	}
-//
-//	ctx.JSON(http.StatusOK, &helpers.MsgResponse{
-//		Status:  http.StatusText(http.StatusOK),
-//		Message: "user successfully updated",
-//	})
-//}
+func (ctrl *Controller) UpdateUser(ctx *gin.Context) {
+	userID, err := strconv.Atoi(ctx.Param("userID"))
+	if err != nil {
+		helpers.WriteErrResponse(ctx, err)
+		return
+	}
+	callerID := ctx.GetUint("callerID")
+
+	var upd Upd
+	err = ctx.ShouldBind(&upd)
+	if err != nil {
+		helpers.WriteErrResponse(ctx, err)
+		return
+	}
+
+	err = ctrl.Service.UpdateUserParamByID(uint(userID), upd.Param, upd.Value, callerID)
+	if err != nil {
+		helpers.WriteErrResponse(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, &helpers.MsgResponse{
+		Status:  http.StatusText(http.StatusOK),
+		Message: "user successfully updated",
+	})
+}
 
 // DeleteUser godoc
 // @Tags users
@@ -171,29 +175,25 @@ func (ctrl *Controller) CreateUser(ctx *gin.Context) {
 // @Failure 400 {object} helpers.ErrResponse
 // @Failure 403 {object} helpers.ErrResponse
 // @Router /api/v1/users/:userID [delete]
-//func (ctrl *Controller) DeleteUser(ctx *gin.Context) {
-//	userID, err := uuid.FromString(ctx.Param("userID"))
-//	if err != nil {
-//		helpers.WriteErrResponse(ctx, clierrs.ErrInvalidUUID)
-//		return
-//	}
-//	callerID, err := uuid.FromString(ctx.GetString("callerID"))
-//	if err != nil {
-//		helpers.WriteErrResponse(ctx, err)
-//		return
-//	}
-//
-//	err = ctrl.Service.DeleteUserByID(userID, callerID)
-//	if err != nil {
-//		helpers.WriteErrResponse(ctx, err)
-//		return
-//	}
-//
-//	ctx.JSON(http.StatusOK, &helpers.MsgResponse{
-//		Status:  http.StatusText(http.StatusOK),
-//		Message: "user successfully deleted",
-//	})
-//}
+func (ctrl *Controller) DeleteUser(ctx *gin.Context) {
+	userID, err := strconv.Atoi(ctx.Param("userID"))
+	if err != nil {
+		helpers.WriteErrResponse(ctx, err)
+		return
+	}
+	callerID := ctx.GetUint("callerID")
+
+	err = ctrl.Service.DeleteUserByID(uint(userID), callerID)
+	if err != nil {
+		helpers.WriteErrResponse(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, &helpers.MsgResponse{
+		Status:  http.StatusText(http.StatusOK),
+		Message: "user successfully deleted",
+	})
+}
 
 // GetAllUsers godoc
 // @Tags users
@@ -207,39 +207,28 @@ func (ctrl *Controller) CreateUser(ctx *gin.Context) {
 // @Param sort_by query string false "Sort order (desc(<) or asc(>)) + sort column. Example: <id (Desc + id)"
 // @Success 200 {object} AllUsersResponse
 // @Router /api/v1/users [get]
-//func (ctrl *Controller) GetAllUsers(ctx *gin.Context) {
-//	callerID, err := uuid.FromString(ctx.GetString("callerID"))
-//	if err != nil {
-//		helpers.WriteErrResponse(ctx, err)
-//		return
-//	}
-//
-//	filters := parseUserFilters(ctx)
-//	pag, err := helpers.ParsePaginationQuery(
-//		ctrl.GetRelativePath(),
-//		ctx.Query("limit"),
-//		ctx.Query("offset"),
-//		ctx.Query("order_by"),
-//	)
-//	if err != nil {
-//		helpers.WriteErrResponse(ctx, err)
-//		return
-//	}
-//
-//	users, pageInfo, err := ctrl.Service.GetAllUsers(callerID, filters, pag)
-//	if err != nil {
-//		helpers.WriteErrResponse(ctx, err)
-//		return
-//	}
-//
-//	resp := &AllUsersResponse{
-//		Status:     http.StatusText(http.StatusOK),
-//		Data:       serializers.ShortenUsers(users),
-//		Pagination: pageInfo,
-//	}
-//
-//	ctx.JSON(http.StatusOK, resp)
-//}
+func (ctrl *Controller) GetAllUsers(ctx *gin.Context) {
+	callerID := ctx.GetUint("callerID")
+
+	users, err := ctrl.Service.GetAllUsers(callerID)
+	if err != nil {
+		helpers.WriteErrResponse(ctx, err)
+		return
+	}
+	usersInfoList := make([]UserInfo, len(users))
+	for i, u := range users {
+		usersInfoList[i] = UserInfo{
+			Username: u.Username,
+			Email:    u.Email,
+			Role:     u.Role,
+		}
+	}
+
+	ctx.JSON(http.StatusOK, &UsersListResponse{
+		Status: http.StatusText(http.StatusOK),
+		Users:  usersInfoList,
+	})
+}
 
 // AuthRequestBody is a declaration for an auth request body
 type AuthRequestBody struct {
@@ -269,13 +258,15 @@ func (ctrl *Controller) Login(ctx *gin.Context) {
 		helpers.WriteErrResponse(ctx, err)
 		return
 	}
-	log.Debug().Any("user", user).Any("token", token).Msg("a")
-	//ctx.JSON(http.StatusOK, &AuthResponse{
-	//	Status: http.StatusText(http.StatusOK),
-	//	Role:   user.Role,
-	//	Theme:  user.Theme,
-	//	Token:  token.String(),
-	//})
+	ctx.JSON(http.StatusOK, &AuthResponse{
+		Status: http.StatusText(http.StatusOK),
+		Token:  token.String(),
+		UserInfo: UserInfo{
+			Role:     user.Role,
+			Username: user.Username,
+			Email:    user.Username,
+		},
+	})
 }
 
 // GetMe godoc
@@ -355,11 +346,11 @@ func (ctrl *Controller) DefineRoutes(r gin.IRouter) {
 	// CRUD available only for superusers (except creation aka registration)
 	r.POST("/create", ctrl.CreateUser)
 	r.GET("/:userID", ctrl.GetUser)
-	//r.PATCH("/:userID", ctrl.UpdateUser)
-	//r.DELETE("/:userID", ctrl.DeleteUser)
+	r.PATCH("/:userID", ctrl.UpdateUser)
+	r.DELETE("/:userID", ctrl.DeleteUser)
 
 	//// extra collections
-	//r.GET("", ctrl.GetAllUsers)
+	r.GET("", ctrl.GetAllUsers)
 
 	// Available for everyone
 	//r.GET("/me", ctrl.GetMe)
