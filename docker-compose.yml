@@ -54,7 +54,7 @@ services:
     ports:
       - "5433:5432"
 #    volumes:
-#      - ./data:/var/lib/postgresql/data
+#      - ./back-end/db/data:/var/lib/postgresql/data
     networks:
       - svc-network
 
