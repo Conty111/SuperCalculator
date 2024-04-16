@@ -17,12 +17,6 @@ run-orkestrator:
 run-agent:
 	go run -v ./back-end/agent/cmd/app/main.go serve 0
 
-start-docker-compose-test:
-	docker-compose -f docker-compose-test.yml up -d
-
-stop-docker-compose-test:
-	docker-compose -f docker-compose-test.yml down
-
 test-unit:
 	go test -v -cover ./...
 
@@ -44,18 +38,22 @@ build-orkestrator:
 gen:
 	go generate ./...
 
-swagger:
-	swag init --parseDependency -g cmd/app/main.go --output=./api
-
 proto:
 	protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative ./back-end/proto/*.proto
-
-
-install-tools:
-	go get -u github.com/onsi/ginkgo/ginkgo
-	go install github.com/swaggo/swag/cmd/swag
 
 gen-keys:
 	mkdir -p  back-end/cert
 	openssl ecparam -name prime256v1 -genkey -noout -out back-end/cert/ec-prime256v1-priv-key.pem
 	openssl ec -in  back-end/cert/ec-prime256v1-priv-key.pem -pubout >  back-end/cert/ec-prime256v1-pub-key.pem
+
+admin-sqlite-local:
+	curl --location 'http://localhost:8000/api/v1/users/create' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"username": "admin","email": "admin@mail.ru","password": "12345"}'
+	go run back-end/db/migrations/admin.go --database=sqlite --conn="./back-end/db/test.db" --email="admin@mail.ru"
+
+admin-postgres:
+	curl --location 'http://localhost:8000/api/v1/users/create' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"username": "admin","email": "admin@mail.ru","password": "12345"}'
+	go run back-end/db/migrations/admin.go --database=postgres --conn="postgresql://postgres:postgres@localhost:5433/postgres?sslmode=disable" --email="admin@mail.ru"

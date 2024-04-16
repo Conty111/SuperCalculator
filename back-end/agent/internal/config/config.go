@@ -103,7 +103,12 @@ func setJSONconfig(cfg *Configuration, num int) {
 	agentCfg := jsonData.Agents[num]
 
 	cfg.App.Name = agentCfg.Name
+
 	cfg.HTTPConfig.Port = strconv.Itoa(agentCfg.HttpPort)
+	cfg.HTTPConfig.Host = agentCfg.Address
+
+	cfg.GRPCConfig.Port = strconv.Itoa(int(agentCfg.GrpcPort))
+	cfg.GRPCConfig.Host = agentCfg.Address
 
 	cfg.BrokerCfg.Partition = agentCfg.BrokerPartition
 	cfg.BrokerCfg.ConsumerGroup = agentCfg.ConsumerGroup

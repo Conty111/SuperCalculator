@@ -14,6 +14,6 @@ func InitializeConsumer(container *dependencies.Container) *kafka_broker.AppCons
 	if err != nil {
 		log.Panic().Err(err).Msg("Error creating Kafka consumer group")
 	}
-	log.Info().Str("brokers", container.Config.BrokerCfg.Brokers[0]).Msg("initialized consumer")
+	log.Info().Any("brokers", container.Config.BrokerCfg.Brokers).Msg("initialized consumer")
 	return kafka_broker.NewAppConsumer(container.TaskManager, con, container.Config.BrokerCfg.ConsumeTopic)
 }

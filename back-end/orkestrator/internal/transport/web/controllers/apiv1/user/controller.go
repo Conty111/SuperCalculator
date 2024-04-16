@@ -47,16 +47,7 @@ func (ctrl *Controller) GetRelativePath() string {
 	return ctrl.RelativePath
 }
 
-// GetUser godoc
-// @Tags users
-// @Summary Get User
-// @Description get user by id
-// @ID get-user
-// @Accept json
-// @Produce json
-// @Param userID path int true "User id"
-// @Success 200 {object} Response
-// @Router /api/v1/users/:userID [get]
+// GetUser endpoint
 func (ctrl *Controller) GetUser(ctx *gin.Context) {
 	userID, err := strconv.Atoi(ctx.Param("userID"))
 	if err != nil {
@@ -81,18 +72,7 @@ func (ctrl *Controller) GetUser(ctx *gin.Context) {
 	})
 }
 
-// CreateUser godoc
-// @Tags users
-// @Summary Create User
-// @Description create/register a new user
-// @ID create-user
-// @Accept json
-// @Produce json
-// @Param user body models.User true "User form"
-// @Success 200 {object} helpers.MsgResponse
-// @Failure 400 {object} helpers.ErrResponse
-// @Failure 403 {object} helpers.ErrResponse
-// @Router /api/v1/users [post]
+// CreateUser endpoint
 func (ctrl *Controller) CreateUser(ctx *gin.Context) {
 	var user models.User
 
@@ -113,29 +93,18 @@ func (ctrl *Controller) CreateUser(ctx *gin.Context) {
 		UserInfo: UserInfo{
 			Role:     user.Role,
 			Username: user.Username,
-			Email:    user.Username,
+			Email:    user.Email,
 		},
 	})
 }
 
+// Upd is body of request to update endpoint
 type Upd struct {
 	Param string      `json:"param"`
 	Value interface{} `json:"value"`
 }
 
-// UpdateUser godoc
-// @Tags users
-// @Summary Update User
-// @Description update user param by id
-// @ID update-user
-// @Accept json
-// @Produce json
-// @Param user_id path int true "ID of the user to be updated"
-// @Param upd     body helpers.Upd true "A structure consisting of the parameter being updated and its new value."
-// @Success 200 {object} helpers.MsgResponse
-// @Failure 400 {object} helpers.ErrResponse
-// @Failure 403 {object} helpers.ErrResponse
-// @Router /api/v1/users/:userID [patch]
+// UpdateUser endpoint
 func (ctrl *Controller) UpdateUser(ctx *gin.Context) {
 	userID, err := strconv.Atoi(ctx.Param("userID"))
 	if err != nil {
@@ -163,18 +132,7 @@ func (ctrl *Controller) UpdateUser(ctx *gin.Context) {
 	})
 }
 
-// DeleteUser godoc
-// @Tags users
-// @Summary Delete User
-// @Description delete user by id
-// @ID delete-user
-// @Accept json
-// @Produce json
-// @Param user_id path int true "ID of the user to be deleted"
-// @Success 200 {object} helpers.MsgResponse
-// @Failure 400 {object} helpers.ErrResponse
-// @Failure 403 {object} helpers.ErrResponse
-// @Router /api/v1/users/:userID [delete]
+// DeleteUser endpoint
 func (ctrl *Controller) DeleteUser(ctx *gin.Context) {
 	userID, err := strconv.Atoi(ctx.Param("userID"))
 	if err != nil {
@@ -195,18 +153,7 @@ func (ctrl *Controller) DeleteUser(ctx *gin.Context) {
 	})
 }
 
-// GetAllUsers godoc
-// @Tags users
-// @Summary Get all users
-// @Description get all users (only for superusers)
-// @ID get-all-users
-// @Accept json
-// @Produce json
-// @Param limit query int false "Limit"
-// @Param offset query int false "Start pointer"
-// @Param sort_by query string false "Sort order (desc(<) or asc(>)) + sort column. Example: <id (Desc + id)"
-// @Success 200 {object} AllUsersResponse
-// @Router /api/v1/users [get]
+// GetAllUsers endpoint
 func (ctrl *Controller) GetAllUsers(ctx *gin.Context) {
 	callerID := ctx.GetUint("callerID")
 
@@ -236,17 +183,7 @@ type AuthRequestBody struct {
 	Password string `json:"password" binding:"required"`
 }
 
-// Login godoc
-// @Tags users,auth
-// @Summary Login
-// @Description implementing a user authorization and returning jwt token
-// @ID user-login
-// @Accept json
-// @Produce json
-// @Success 200 {object} AuthResponse
-// @Failure 400 {object} helpers.ErrResponse
-// @Failure 403 {object} helpers.ErrResponse
-// @Router /api/v1/user/login [post]
+// Login endpoint
 func (ctrl *Controller) Login(ctx *gin.Context) {
 	var body AuthRequestBody
 	if err := ctx.ShouldBind(&body); err != nil {

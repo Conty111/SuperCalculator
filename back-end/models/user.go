@@ -12,7 +12,7 @@ type User struct {
 	gorm.Model
 	Email    string `json:"email" gorm:"constraint:unique_index" binding:"required,email"`
 	Password string `json:"password" gorm:"column:password" binding:"required"`
-	Username string `json:"name" gorm:"column:username"`
+	Username string `json:"username" gorm:"column:username" binding:"required"`
 	Role     Role   `json:"role" gorm:"column:role"`
 }
 

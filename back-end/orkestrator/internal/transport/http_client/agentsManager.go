@@ -22,7 +22,7 @@ func NewAgentHTTPClient(timeout time.Duration) *AgentHTTPClient {
 	}
 }
 
-func (s *AgentHTTPClient) GetAgentInfo(agent models.AgentConfig) (models.AgentInfo, error) {
+func (s *AgentHTTPClient) GetAgentInfo(agent *models.AgentConfig) (*models.AgentInfo, error) {
 
 	_, _, err := sendHTTPRequest(
 		s.HTTPClient,
@@ -32,13 +32,13 @@ func (s *AgentHTTPClient) GetAgentInfo(agent models.AgentConfig) (models.AgentIn
 	)
 
 	if err != nil {
-		return models.AgentInfo{}, err
+		return &models.AgentInfo{}, err
 	}
 	panic("implement get agent info http")
 	//return body, status, nil
 }
 
-func (s *AgentHTTPClient) SetAgentSettings(settings models.Settings, agent models.AgentConfig) error {
+func (s *AgentHTTPClient) SetAgentSettings(settings *models.Settings, agent *models.AgentConfig) error {
 	reqBody, err := json.Marshal(settings.DurationSettings)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to marshal duration settings")

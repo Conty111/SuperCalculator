@@ -9,9 +9,10 @@ import (
 	"net/http"
 )
 
-type AgentResponse struct {
-	Body   map[string]interface{} `json:"body"`
-	Status int                    `json:"status"`
+type AgentResponse[T any] struct {
+	Body  T      `json:"body"`
+	Error string `json:"error"`
+	//Status int                    `json:"status"`
 }
 
 type ErrResponse struct {

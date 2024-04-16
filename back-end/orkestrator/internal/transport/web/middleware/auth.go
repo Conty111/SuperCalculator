@@ -13,9 +13,9 @@ import (
 )
 
 var notRequireAuthenticationEndpoints = []string{
-	// "/api/v1/users/login",
-	// "/api/v1/users/create",
-	// "/api/v1/status",
+	"/api/v1/users/login",
+	"/api/v1/users/create",
+	"/api/v1/status",
 }
 
 func TokenAuthMiddleware(publicKeyPath string) gin.HandlerFunc {
