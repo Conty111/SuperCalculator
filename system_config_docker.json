@@ -15,10 +15,10 @@
     {
       "name": "InoAgent",
       "address": "agent2",
-      "broker_partition": 0,
+      "broker_partition": 1,
       "consumer_group": "agents",
       "broker_commit_interval": 1,
-      "http_port": 8003,
+      "http_port": 8001,
       "grpc_port": 8002
     }
   ]
