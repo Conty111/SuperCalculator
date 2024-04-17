@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.3'
 
 services:
   zookeeper:
@@ -7,7 +7,7 @@ services:
     ports:
       - "2181:2181"
     networks:
-      - svc-network
+      - calculator-network
 
   kafka:
     image: wurstmeister/kafka:latest
@@ -21,7 +21,7 @@ services:
     depends_on:
     - zookeeper
     networks:
-      - svc-network
+      - calculator-network
 
   agent:
     image: svc-agent
@@ -32,8 +32,6 @@ services:
     restart: on-failure
     depends_on:
       - kafka
-    environment:
-      AGENTS_COUNT: ${AGENTS_COUNT}
     env_file:
       - enviroments/agent.env
       - enviroments/kafka.env
@@ -42,19 +40,23 @@ services:
     entrypoint: "/app"
     command: "serve 0"
     networks:
-      - svc-network
+      - calculator-network
 
   db:
     image: postgres:latest
     container_name: db
     env_file:
       - enviroments/docker.db.env
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
     ports:
       - "5433:5432"
 #    volumes:
 #      - ./back-end/db/data:/var/lib/postgresql/data
     networks:
-      - svc-network
+      - calculator-network
 
   orkestrator:
     image: svc-orkestrator
@@ -83,8 +85,9 @@ services:
     entrypoint: "/app"
     command: "serve"
     networks:
-      - svc-network
+      - calculator-network
 
 networks:
-  svc-network:
+  calculator-network:
+
 #    external: true
