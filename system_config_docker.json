@@ -4,8 +4,8 @@
   ],
   "agents": [
     {
-      "name": "agent1",
-      "address": "agent",
+      "name": "SuperAgent",
+      "address": "agent1",
       "broker_partition": 0,
       "consumer_group": "agents",
       "broker_commit_interval": 1,
@@ -13,8 +13,8 @@
       "grpc_port": 8002
     },
     {
-      "name": "agent2",
-      "address": "localhost",
+      "name": "InoAgent",
+      "address": "agent2",
       "broker_partition": 0,
       "consumer_group": "agents",
       "broker_commit_interval": 1,
