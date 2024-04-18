@@ -52,7 +52,7 @@ admin-sqlite-local:
     --data-raw '{"username": "admin","email": "admin@mail.ru","password": "12345"}'
 	go run back-end/db/migrations/admin.go --database=sqlite --conn="./back-end/db/test.db" --email="admin@mail.ru"
 
-admin-postgres:
+admin-postgres-docker:
 	curl --location 'http://localhost:8000/api/v1/users/create' \
     --header 'Content-Type: application/json' \
     --data-raw '{"username": "admin","email": "admin@mail.ru","password": "12345"}'

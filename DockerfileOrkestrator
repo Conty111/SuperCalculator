@@ -30,9 +30,7 @@ COPY --from=builder /src/orkestrator_app app
 COPY --from=builder /src/system_config.json .
 COPY --from=builder /src/enviroments ./enviroments
 
-RUN apk update && apk upgrade
-# Установка glibc
-RUN apk --no-cache add ca-certificates wget
+RUN apk update && apk upgrade && apk --no-cache add ca-certificates wget
 RUN wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub
 RUN wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.34-r0/glibc-2.34-r0.apk
 RUN wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.34-r0/glibc-bin-2.34-r0.apk
