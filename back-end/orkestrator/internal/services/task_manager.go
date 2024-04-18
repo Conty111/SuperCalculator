@@ -1,18 +1,12 @@
 package services
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/Conty111/SuperCalculator/back-end/models"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/clierrs"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/repository"
 	"github.com/rs/zerolog/log"
-	"io"
-	"net/http"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -22,7 +16,6 @@ type TaskManager struct {
 	ProduceChan chan<- models.Task
 	Agents      []models.AgentConfig
 	timeRetry   time.Duration
-	timeoutResp time.Duration
 	cachedTasks map[uint]interface{}
 	lock        sync.RWMutex
 }
@@ -30,13 +23,11 @@ type TaskManager struct {
 func NewTaskManager(rep *repository.TasksRepository,
 	produceCg chan<- models.Task,
 	agents []models.AgentConfig,
-	timeoutResponse time.Duration,
 	timeRetry time.Duration) *TaskManager {
 	return &TaskManager{
 		Repo:        rep,
 		ProduceChan: produceCg,
 		Agents:      agents,
-		timeoutResp: timeoutResponse,
 		timeRetry:   timeRetry,
 		cachedTasks: make(map[uint]interface{}),
 		lock:        sync.RWMutex{},
@@ -47,70 +38,17 @@ func NewTaskManager(rep *repository.TasksRepository,
 func (tm *TaskManager) Start(ctx context.Context) {
 	tasks, err := tm.Repo.GetNotExecutedTasks()
 	if err != nil {
-		log.Error().Err(err).Msg("failed to get not executed tasks")
+		log.Error().Err(err).Msg("error while trying to get not executed tasks from database")
+	}
+	for _, t := range tasks {
+		tm.cachedTasks[t.ID] = t
 	}
 	tm.EnableRetrying(ctx)
-	for _, t := range tasks {
-		task := models.Task{
-			ID:         t.ID,
-			Expression: t.Expression,
-		}
-		tm.ProduceChan <- task
-		tm.lock.RLock()
-		tm.cachedTasks[task.ID] = task
-		tm.lock.RUnlock()
-	}
 }
 
 // GetAllTasks returns all tasks in database
 func (tm *TaskManager) GetAllTasks() ([]*models.TasksModel, error) {
 	return tm.Repo.GetAllTasks()
-}
-
-// SetSettings set settings on orchestrator and sends settings to agents in parallel, returns their responses
-func (tm *TaskManager) SetSettings(settings *models.Settings) ([]map[string]interface{}, []int) {
-	if settings.TimeoutResponse != 0 {
-		tm.lock.RLock()
-		tm.timeoutResp = time.Duration(settings.TimeoutResponse) * time.Second
-		tm.timeRetry = time.Duration(settings.TimeToRetry) * time.Second
-		tm.lock.RUnlock()
-	}
-
-	client := http.Client{Timeout: tm.timeoutResp}
-	wg := sync.WaitGroup{}
-	wg.Add(len(tm.Agents))
-
-	responseBodys := make([]map[string]interface{}, len(tm.Agents))
-	statuses := make([]int, len(tm.Agents))
-
-	for i, agent := range tm.Agents {
-		agent := agent
-		i := i
-		go func() {
-			defer wg.Done()
-			reqBody, err := json.Marshal(settings.DurationSettings)
-			if err != nil {
-				log.Error().Err(err).Msg("failed to marshal duration settings")
-				statuses[i] = http.StatusInternalServerError
-				return
-			}
-			body, status, err := sendRequestToAgent(
-				&client,
-				bytes.NewReader(reqBody),
-				fmt.Sprintf("%s/calculator", agent.Address+strconv.Itoa(agent.HttpPort)),
-				http.MethodPut,
-			)
-			if err != nil {
-				statuses[i] = http.StatusInternalServerError
-				return
-			}
-			responseBodys[i] = body
-			statuses[i] = status
-		}()
-	}
-	wg.Wait()
-
-	return responseBodys, statuses
 }
 
 // CreateTask creates task in database
@@ -138,39 +76,6 @@ func (tm *TaskManager) CreateTask(expression string) (*models.TasksModel, error)
 	return nil, err
 }
 
-// GetWorkersInfo gets info from workers in parallel and return their bodys and statuses
-func (tm *TaskManager) GetWorkersInfo() ([]map[string]interface{}, []int) {
-	client := http.Client{Timeout: tm.timeoutResp}
-	wg := sync.WaitGroup{}
-	wg.Add(len(tm.Agents))
-
-	responseBodys := make([]map[string]interface{}, len(tm.Agents))
-	statuses := make([]int, len(tm.Agents))
-
-	for i, agent := range tm.Agents {
-		agentAddr := agent.Address
-		i := i
-		go func() {
-			defer wg.Done()
-			body, status, err := sendRequestToAgent(
-				&client,
-				nil,
-				fmt.Sprintf("%s/status", agentAddr),
-				http.MethodGet,
-			)
-			if err != nil {
-				statuses[i] = http.StatusInternalServerError
-				return
-			}
-			responseBodys[i] = body
-			statuses[i] = status
-		}()
-	}
-	wg.Wait()
-
-	return responseBodys, statuses
-}
-
 // DeleteTaskByID deletes task by id
 func (tm *TaskManager) DeleteTaskByID(taskID uint) error {
 	t := &models.TasksModel{}
@@ -194,10 +99,15 @@ func (tm *TaskManager) SaveResult(res *models.Result) error {
 	if err != nil {
 		return err
 	}
+	if t.IsExecuted {
+		return nil
+	}
 	fields := map[string]interface{}{
 		"value":       res.Value,
 		"is_executed": true,
-		"error":       res.Error,
+	}
+	if res.Error != "" {
+		fields["error"] = res.Error
 	}
 	return tm.Repo.Update(t, fields)
 }
@@ -235,7 +145,7 @@ func (tm *TaskManager) getCachedTasksIDs() []uint {
 func (tm *TaskManager) RetryTasks() {
 	ids := tm.getCachedTasksIDs()
 	if len(ids) > 0 {
-		log.Debug().Any("taskIDs", ids).Msg("retrying")
+		log.Info().Any("taskIDs", ids).Msg("retrying tasks")
 		for _, id := range ids {
 			t, err := tm.Repo.GetByID(id)
 			if err != nil {
@@ -249,35 +159,4 @@ func (tm *TaskManager) RetryTasks() {
 			tm.ProduceChan <- task
 		}
 	}
-}
-
-// sendRequestToAgent sends request and returns body and status
-func sendRequestToAgent(
-	client *http.Client,
-	reqBody io.Reader,
-	agentAddr string,
-	method string) (map[string]interface{}, int, error) {
-	body := make(map[string]interface{})
-	req, err := http.NewRequest(method, fmt.Sprintf("http://%s", agentAddr), reqBody)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create request")
-		return nil, 0, err
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to send request")
-		return nil, 0, err
-	}
-	defer resp.Body.Close()
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to read response body")
-		return nil, 0, err
-	}
-	err = json.Unmarshal(data, &body)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to unmarshal body data")
-		return nil, 0, err
-	}
-	return body, resp.StatusCode, nil
 }

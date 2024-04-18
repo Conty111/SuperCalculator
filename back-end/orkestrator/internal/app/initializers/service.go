@@ -14,12 +14,11 @@ import (
 
 func InitializeTaskManager(container *dependencies.Container) interfaces.TaskManager {
 	rep := repository.NewTasksRepository(container.Database)
-
+	log.Debug().Msg("here")
 	return services.NewTaskManager(
 		rep,
 		container.Producer.InChan,
 		container.Config.App.Agents,
-		container.Config.App.TimeoutResponse,
 		container.Config.App.TimeToRetry,
 	)
 }
