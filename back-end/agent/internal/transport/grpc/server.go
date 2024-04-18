@@ -5,6 +5,7 @@ import (
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/services"
 	"github.com/Conty111/SuperCalculator/back-end/models"
 	pb "github.com/Conty111/SuperCalculator/back-end/proto"
+	"github.com/rs/zerolog/log"
 )
 
 type Server struct {
@@ -20,7 +21,9 @@ func NewGRPCService(monitor *services.Monitor, calculator *services.CalculatorSe
 	}
 }
 
-func (s *Server) GetInfo(ctx context.Context, req *pb.AgentInfoRequest) (*pb.AgentInfoResponse, error) {
+func (s *Server) GetInfo(ctx context.Context, _ *pb.AgentInfoRequest) (*pb.AgentInfoResponse, error) {
+	log.Info().
+		Msg("got GetInfo grpc call")
 	info := s.Monitor.GetInfo()
 	settings := s.Calculator.GetSettings()
 	return &pb.AgentInfoResponse{
@@ -38,11 +41,13 @@ func (s *Server) GetInfo(ctx context.Context, req *pb.AgentInfoRequest) (*pb.Age
 }
 
 func (s *Server) SetSettings(ctx context.Context, req *pb.SetAgentSettingsRequest) (*pb.SetAgentSettingsResponse, error) {
+	log.Info().
+		Msg("got SetSettings grpc call")
 	s.Calculator.SetOperationDuration(&models.DurationSettings{
 		DivisionDuration: float64(req.Settings.DivisionDuration),
 		AddDuration:      float64(req.Settings.AddDuration),
 		SubtractDuration: float64(req.Settings.SubtractDuration),
 		MultiplyDuration: float64(req.Settings.MultiplyDuration),
 	})
-	return nil, nil
+	return &pb.SetAgentSettingsResponse{}, nil
 }
