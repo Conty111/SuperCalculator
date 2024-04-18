@@ -76,7 +76,11 @@ func (ur *UserRepository) UserExists(userID uint) (bool, error) {
 
 // UpdateUser sets param of the user with provided userID to value
 func (ur *UserRepository) UpdateUser(user *models.User, param string, value interface{}) error {
-	err := ur.Database.Model(user).Update(param, value).Error
+	err := ur.Database.
+		Model(models.User{}).
+		Where("users.id = ?", user.ID).
+		Update(param, value).
+		Error
 	return err
 }
 

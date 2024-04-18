@@ -14,7 +14,7 @@ COPY Makefile .
 
 RUN mkdir enviroments
 COPY ./enviroments/docker.db.env ./enviroments/db.env
-COPY ./enviroments/.env ./enviroments/.env
+COPY enviroments/sys.env ./enviroments/env
 COPY ./enviroments/kafka.env ./enviroments/kafka.env
 COPY ./enviroments/orkestrator.env ./enviroments/orkestrator.env
 
@@ -23,9 +23,9 @@ RUN make build-orkestrator
 # production stage
 FROM alpine:latest
 
-#COPY --from=builder /src/.env .
-#COPY --from=builder /src/kafka.env .
-#COPY --from=builder /src/orkestrator.env .
+#COPY --from=builder /src/sys.env .
+#COPY --from=builder /src/kafka.sys.env .
+#COPY --from=builder /src/orkestrator.sys.env .
 COPY --from=builder /src/orkestrator_app app
 COPY --from=builder /src/system_config.json .
 COPY --from=builder /src/enviroments ./enviroments

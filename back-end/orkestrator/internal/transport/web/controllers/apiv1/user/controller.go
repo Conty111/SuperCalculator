@@ -200,6 +200,7 @@ func (ctrl *Controller) Login(ctx *gin.Context) {
 		Status: http.StatusText(http.StatusOK),
 		Token:  token.String(),
 		UserInfo: UserInfo{
+			ID:       user.ID,
 			Role:     user.Role,
 			Username: user.Username,
 			Email:    user.Username,
