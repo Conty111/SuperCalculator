@@ -3,8 +3,8 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	_ "github.com/lib/pq"
 	"github.com/spf13/cobra"
-	_ "gorm.io/driver/postgres"
 	_ "gorm.io/driver/sqlite"
 	"os"
 )
