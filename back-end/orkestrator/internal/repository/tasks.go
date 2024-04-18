@@ -3,6 +3,7 @@ package repository
 import (
 	"github.com/Conty111/SuperCalculator/back-end/models"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/clierrs"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -27,8 +28,9 @@ func (tr *TasksRepository) GetAllTasks() ([]*models.TasksModel, error) {
 	var tasks []*models.TasksModel
 	r := tr.Database.
 		Model(models.TasksModel{}).
-		Preload(clause.Associations).
+		Preload("User").
 		Find(&tasks)
+	log.Print(tasks[0].User)
 	return tasks, r.Error
 }
 

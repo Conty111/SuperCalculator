@@ -14,7 +14,7 @@ type User struct {
 	Password string        `json:"password" gorm:"column:password" binding:"required"`
 	Username string        `json:"username" gorm:"column:username" binding:"required"`
 	Role     Role          `json:"role" gorm:"column:role"`
-	Tasks    []*TasksModel `json:"tasks" gorm:"foreignKey:UserID;"`
+	Tasks    []*TasksModel `json:"tasks" gorm:"foreignKey:UserID;references:ID"`
 }
 
 type Token struct {

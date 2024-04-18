@@ -18,9 +18,9 @@ RUN make build-agent
 # production stage
 FROM alpine:3.19.1
 
-#COPY --from=builder /src/.env .
-#COPY --from=builder /src/kafka.env .
-#COPY --from=builder /src/agent.env .
+#COPY --from=builder /src/sys.env .
+#COPY --from=builder /src/kafka.sys.env .
+#COPY --from=builder /src/agent.sys.env .
 COPY --from=builder /src/agent_app app
 COPY --from=builder /src/system_config.json .
 COPY --from=builder /src/enviroments ./enviroments

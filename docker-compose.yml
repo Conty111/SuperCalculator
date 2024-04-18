@@ -36,7 +36,7 @@ services:
     env_file:
       - enviroments/agent.env
       - enviroments/kafka.env
-      - enviroments/.env
+      - enviroments/sys.env
 #    entrypoint: "yes"
     entrypoint: "/app"
     command: "serve 0"
@@ -76,7 +76,7 @@ services:
     env_file:
       - enviroments/orkestrator.env
       - enviroments/kafka.env
-      - enviroments/.env
+      - enviroments/sys.env
       - enviroments/docker.db.env
     volumes:
       - ./back-end/cert:/back-end/cert

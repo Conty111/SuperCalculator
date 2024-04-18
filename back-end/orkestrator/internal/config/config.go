@@ -102,10 +102,6 @@ func setJSONconfig(cfg *Configuration) {
 func getFromEnv() *Configuration {
 	var cfg = &Configuration{}
 
-	err := envy.Load("enviroments/.env", "enviroments/db.env", "enviroments/orkestrator.env", "enviroments/kafka.env")
-	if err != nil {
-		log.Panic().Err(err).Msg("cannot load env files")
-	}
 	cfg.JSONConfigPath = envy.Get("JSON_CONFIG_PATH", "system_config.json")
 	cfg.App = getAppConf()
 	cfg.DB = getDBConfig()
@@ -163,7 +159,7 @@ func getAppConf() *App {
 	cfg.AuthPrivateKeyPath = envy.Get("AUTH_PRIVATE_KEY_PATH", "")
 	ttl, err := strconv.Atoi(envy.Get("TOKEN_TTL", "700900"))
 	if err != nil {
-		log.Info().Msg("failed to parse token TTL from env, setting default value")
+		log.Info().Msg("failed to parse token TTL from sys.env, setting default value")
 		ttl = 700
 	}
 	cfg.TokenTTL = time.Second * time.Duration(ttl)
