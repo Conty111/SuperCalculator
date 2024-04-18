@@ -45,14 +45,14 @@ type DatabaseConfig struct {
 }
 
 type App struct {
-	LoggerCfg       gin.LoggerConfig
-	TimeoutResponse time.Duration
-	TimeToRetry     time.Duration
-	Agents          []models.AgentConfig
-	ApiToUse        enums.ApiType
+	LoggerCfg          gin.LoggerConfig
+	TimeoutResponse    time.Duration
+	TimeToRetry        time.Duration
+	Agents             []models.AgentConfig
+	ApiToUse           enums.ApiType
 	AuthPublicKeyPath  string
 	AuthPrivateKeyPath string
-	TokenTTL time.Duration
+	TokenTTL           time.Duration
 }
 
 type HTTPConfig struct {
@@ -102,7 +102,7 @@ func setJSONconfig(cfg *Configuration) {
 func getFromEnv() *Configuration {
 	var cfg = &Configuration{}
 
-	err := envy.Load("enviroments/.env", "enviroments/db.env", "enviroments/orkestrator.env", "enviroments/orkestrator.env")
+	err := envy.Load("enviroments/.env", "enviroments/db.env", "enviroments/orkestrator.env", "enviroments/kafka.env")
 	if err != nil {
 		log.Panic().Err(err).Msg("cannot load env files")
 	}

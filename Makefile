@@ -47,13 +47,13 @@ gen-keys:
 	openssl ec -in  back-end/cert/ec-prime256v1-priv-key.pem -pubout >  back-end/cert/ec-prime256v1-pub-key.pem
 
 admin-sqlite-local:
-	curl --location 'http://localhost:8000/api/v1/users/create' \
+	curl --location 'http://localhost:8000/api/v1/users/register' \
     --header 'Content-Type: application/json' \
     --data-raw '{"username": "admin","email": "admin@mail.ru","password": "12345"}'
-	go run back-end/db/migrations/admin.go --database=sqlite --conn="./back-end/db/test.db" --email="admin@mail.ru"
+	go run back-end/db/migrations/admin.go --database=sqlite --conn="./back-end/db/local.db" --email="admin@mail.ru"
 
 admin-postgres-docker:
-	curl --location 'http://localhost:8000/api/v1/users/create' \
+	curl --location 'http://localhost:8000/api/v1/users/register' \
     --header 'Content-Type: application/json' \
     --data-raw '{"username": "admin","email": "admin@mail.ru","password": "12345"}'
 	go run back-end/db/migrations/admin.go --database=postgres --conn="postgresql://postgres:postgres@localhost:5433/postgres?sslmode=disable" --email="admin@mail.ru"

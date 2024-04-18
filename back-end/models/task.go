@@ -10,6 +10,12 @@ type TasksModel struct {
 	Value      float64 `gorm:"column:value"`
 	IsExecuted bool    `gorm:"column:is_executed;default:false"`
 	Error      string  `gorm:"column:error;type:text"`
+	UserID     uint    `gorm:"index"`
+	User       *User   `json:"user"`
+}
+
+func (TasksModel) TableName() string {
+	return "tasks"
 }
 
 type Task struct {

@@ -41,6 +41,7 @@ func InitializeDatabase(dbDSN string, dbType string) *gorm.DB {
 	}
 
 	InitMigrations(db)
+	log.Info().Str("dbType", dbType).Msg("initialized database")
 	return db
 }
 

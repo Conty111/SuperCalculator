@@ -8,5 +8,4 @@ import (
 type Response struct {
 	ID   int32             `json:"id"`
 	Info *models.AgentInfo `json:"info"`
-	//Build  *build.Info   `json:"build"`
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/app/dependencies"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/app/initializers"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/config"
+	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/repository"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"time"
@@ -60,7 +61,7 @@ func BuildApplication() *Application {
 	}
 
 	container.AgentManager = initializers.InitializeAgentManager(container)
-	container.UserManager = initializers.InitializeUserManager(container)
+	container.UserManager = repository.NewUserRepository(db)
 	container.AuthManager = initializers.InitializeAuthManager(container)
 
 	container.Producer = initializers.InitializeProducer(container)

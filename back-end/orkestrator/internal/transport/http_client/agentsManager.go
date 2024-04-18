@@ -3,6 +3,7 @@ package http_client
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/Conty111/SuperCalculator/back-end/models"
 	"github.com/rs/zerolog/log"
@@ -22,20 +23,50 @@ func NewAgentHTTPClient(timeout time.Duration) *AgentHTTPClient {
 	}
 }
 
-func (s *AgentHTTPClient) GetAgentInfo(agent *models.AgentConfig) (*models.AgentInfo, error) {
+type GetInfoResponse struct {
+	ID   int32             `json:"id"`
+	Info *models.AgentInfo `json:"info"`
+}
 
-	_, _, err := sendHTTPRequest(
+type SetSettingsResponse struct {
+	Status  string `json:"attr,status"`
+	Message string `json:"message"`
+}
+
+type ErrResponse struct {
+	Status string `json:"status"`
+	Error  string `json:"error"`
+}
+
+func (s *AgentHTTPClient) GetAgentInfo(agent *models.AgentConfig) (*models.AgentInfo, error) {
+	body, status, err := sendHTTPRequest(
 		s.HTTPClient,
 		nil,
 		fmt.Sprintf("%s/status", agent.Address+strconv.Itoa(agent.HttpPort)),
 		http.MethodGet,
 	)
-
 	if err != nil {
 		return &models.AgentInfo{}, err
 	}
-	panic("implement get agent info http")
-	//return body, status, nil
+	if status != http.StatusOK {
+		decoded, err := unmarshalErrorResponse(body)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to unmarshal err response")
+			return nil, err
+		}
+		log.Error().
+			Str("bodyStatus", decoded.Status).
+			Str("error", decoded.Error).
+			Msg("got not OK response status from GetInfo request")
+		return nil, errors.New(decoded.Error)
+	}
+	var info GetInfoResponse
+	err = json.Unmarshal(body, &info)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to unmarshal OK response")
+		return nil, err
+	}
+	return info.Info, nil
 }
 
 func (s *AgentHTTPClient) SetAgentSettings(settings *models.Settings, agent *models.AgentConfig) error {
@@ -53,8 +84,39 @@ func (s *AgentHTTPClient) SetAgentSettings(settings *models.Settings, agent *mod
 	if err != nil {
 		return err
 	}
-	log.Info().Any("body", body).Str("status", http.StatusText(status))
+	if status != http.StatusOK {
+		decoded, err := unmarshalErrorResponse(body)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to unmarshal err response")
+			return err
+		}
+		log.Error().
+			Str("bodyStatus", decoded.Status).
+			Str("error", decoded.Error).
+			Msg("got not OK response status from SetSettings request")
+		return errors.New(decoded.Error)
+	}
+	var decoded SetSettingsResponse
+	err = json.Unmarshal(body, &decoded)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to unmarshal body data")
+		return err
+	}
+	log.Info().
+		Str("httpStatus", http.StatusText(status)).
+		Str("message", decoded.Message).
+		Msg("response from agent")
+
 	return nil
+}
+
+func unmarshalErrorResponse(body []byte) (*ErrResponse, error) {
+	var resp ErrResponse
+	err := json.Unmarshal(body, &resp)
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
 }
 
 // sendHTTPRequestToAgent sends request and returns body and status
@@ -62,9 +124,7 @@ func sendHTTPRequest(
 	client *http.Client,
 	reqBody io.Reader,
 	addr string,
-	method string) (map[string]interface{}, int, error) {
-
-	body := make(map[string]interface{})
+	method string) ([]byte, int, error) {
 
 	req, err := http.NewRequest(method, fmt.Sprintf("http://%s", addr), reqBody)
 	if err != nil {
@@ -82,10 +142,5 @@ func sendHTTPRequest(
 		log.Error().Err(err).Msg("failed to read response body")
 		return nil, 0, err
 	}
-	err = json.Unmarshal(data, &body)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to unmarshal body data")
-		return nil, 0, err
-	}
-	return body, resp.StatusCode, nil
+	return data, resp.StatusCode, nil
 }

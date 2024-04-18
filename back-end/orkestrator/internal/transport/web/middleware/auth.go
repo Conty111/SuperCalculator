@@ -14,7 +14,7 @@ import (
 
 var notRequireAuthenticationEndpoints = []string{
 	"/api/v1/users/login",
-	"/api/v1/users/create",
+	"/api/v1/users/register",
 	"/api/v1/status",
 }
 

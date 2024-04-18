@@ -53,8 +53,7 @@ func (c *AgentGRPCClient) SetAgentSettings(settings *models.Settings, agent *mod
 }
 
 func (c *AgentGRPCClient) connect(agent *models.AgentConfig) (*grpc.ClientConn, error) {
-	addr := fmt.Sprintf("%s:%d", agent.Address, agent.GrpcPort) // используем адрес сервера
-	// установим соединение
+	addr := fmt.Sprintf("%s:%d", agent.Address, agent.GrpcPort)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Error().Err(err).Msg("could not connect to grpc server")
