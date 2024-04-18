@@ -4,6 +4,7 @@ import (
 	"github.com/Conty111/SuperCalculator/back-end/models"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/interfaces"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/helpers"
+	"github.com/rs/zerolog/log"
 	"go/types"
 )
 
@@ -36,6 +37,10 @@ func (s *AgentManager) SetSettings(settings *models.Settings) []*helpers.AgentRe
 
 		err := s.Client.SetAgentSettings(settings, &agent)
 		if err != nil {
+			log.Error().Err(err).
+				Str("agent", agent.Name).
+				Str("agentAddress", agent.Address).
+				Msg("error while setting settings to the agent")
 			res.Error = err.Error()
 		}
 		responses[i] = &res
@@ -57,6 +62,10 @@ func (s *AgentManager) GetWorkersInfo() []*helpers.AgentResponse[*models.AgentIn
 		var res helpers.AgentResponse[*models.AgentInfo]
 		info, err := s.Client.GetAgentInfo(&agent)
 		if err != nil {
+			log.Error().Err(err).
+				Str("agent", agent.Name).
+				Str("agentAddress", agent.Address).
+				Msg("error while getting info from agent")
 			res.Error = err.Error()
 		}
 		res.Body = info

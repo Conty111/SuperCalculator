@@ -30,50 +30,51 @@ func NewAppConsumer(svc interfaces.TaskManager,
 }
 
 func (ac *AppConsumer) Start() {
-
-	partList, err := ac.Consumer.Partitions(ac.Topic)
-	if err != nil {
-		log.Panic().
-			Err(err).
-			Msg("error to get partitions from topic")
-	}
-	wg := sync.WaitGroup{}
-	ctx, cancel := context.WithCancel(context.TODO())
-	for _, part := range partList {
-		pc, err := ac.Consumer.ConsumePartition(ac.Topic, part, sarama.OffsetNewest)
+	go func() {
+		partList, err := ac.Consumer.Partitions(ac.Topic)
 		if err != nil {
 			log.Panic().
 				Err(err).
-				Int32("Partition", part).
-				Msg("error creating consumer for partition")
+				Msg("error to get partitions from topic")
 		}
-		wg.Add(1)
-		go func(pc sarama.PartitionConsumer, ctx context.Context) {
-			defer wg.Done()
-			for {
-				select {
-				case message := <-pc.Messages():
-					log.Info().
-						Int32("Partition", message.Partition).
-						Str("message", string(message.Value)).
-						Msg("got message")
-					res, err := parseMessage(message)
-					if err == nil {
-						err := ac.Service.SaveResult(res)
-						if err != nil {
-							log.Error().Err(err).Msg("failed to save result")
-						}
-					}
-				case <-ctx.Done():
-					return
-				}
+		wg := sync.WaitGroup{}
+		ctx, cancel := context.WithCancel(context.TODO())
+		for _, part := range partList {
+			pc, err := ac.Consumer.ConsumePartition(ac.Topic, part, sarama.OffsetNewest)
+			if err != nil {
+				log.Panic().
+					Err(err).
+					Int32("Partition", part).
+					Msg("error creating consumer for partition")
 			}
-		}(pc, ctx)
-	}
-	log.Info().Msg("consumer are ready to receive messages")
-	<-ac.Done
-	cancel()
-	wg.Wait()
+			wg.Add(1)
+			go func(pc sarama.PartitionConsumer, ctx context.Context) {
+				defer wg.Done()
+				for {
+					select {
+					case message := <-pc.Messages():
+						log.Info().
+							Int32("Partition", message.Partition).
+							Str("message", string(message.Value)).
+							Msg("got message")
+						res, err := parseMessage(message)
+						if err == nil && res != nil {
+							err = ac.Service.SaveResult(res)
+							if err != nil {
+								log.Error().Err(err).Msg("failed to save result")
+							}
+						}
+					case <-ctx.Done():
+						return
+					}
+				}
+			}(pc, ctx)
+		}
+		log.Info().Msg("consumer are ready to receive messages")
+		<-ac.Done
+		cancel()
+		wg.Wait()
+	}()
 }
 
 func (ac *AppConsumer) Stop() {

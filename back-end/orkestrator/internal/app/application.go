@@ -59,13 +59,13 @@ func BuildApplication() *Application {
 		Database:  db,
 	}
 
-	container.Producer = initializers.InitializeProducer(container)
-	container.Consumer = initializers.InitializeConsumer(container)
-
-	container.TaskManager = initializers.InitializeTaskManager(container)
 	container.AgentManager = initializers.InitializeAgentManager(container)
 	container.UserManager = initializers.InitializeUserManager(container)
 	container.AuthManager = initializers.InitializeAuthManager(container)
+
+	container.Producer = initializers.InitializeProducer(container)
+	container.TaskManager = initializers.InitializeTaskManager(container)
+	container.Consumer = initializers.InitializeConsumer(container)
 
 	router := initializers.InitializeRouter(container)
 	server := initializers.InitializeHTTPServer(router, cfg.HTTPConfig)
@@ -81,9 +81,9 @@ func (a *Application) Start(ctx context.Context, cli bool) {
 	if cli {
 		return
 	}
-	go a.Container.Consumer.Start()
-	a.Container.Producer.Start()
 	a.Container.TaskManager.Start(ctx)
+	a.Container.Consumer.Start()
+	a.Container.Producer.Start()
 	a.startHTTPServer()
 }
 
