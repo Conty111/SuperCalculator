@@ -33,14 +33,6 @@ func (ctrl *Controller) GetRelativePath() string {
 	return ctrl.RelativePath
 }
 
-// GetStatus godoc
-// @Summary Get Application Status
-// @Description get status
-// @ID get-status
-// @Accept json
-// @Produce json
-// @Success 200 {object} ResponseDoc
-// @Router /api/v1/status [get]
 func (ctrl *Controller) GetStatus(ctx *gin.Context) {
 	render.JSONAPIPayload(ctx, http.StatusOK, &Response{
 		Status: http.StatusText(http.StatusOK),

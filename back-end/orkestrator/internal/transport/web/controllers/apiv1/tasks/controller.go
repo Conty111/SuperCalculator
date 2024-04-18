@@ -35,23 +35,15 @@ func (ctrl *Controller) GetRelativePath() string {
 	return ctrl.RelativePath
 }
 
-// GetTasks godoc
-// @Summary Returns All Tasks
-// @Description set time duration
-// @ID get-tasks
-// @Accept json
-// @Produce json
-// @Success 200 {object} TasksListResponse
-// @Router /api/v1/tasks/tasks [get]
 func (ctrl *Controller) GetTasks(ctx *gin.Context) {
 	tasks, err := ctrl.Service.GetAllTasks()
 	if err != nil {
 		helpers.WriteErrResponse(ctx, err)
 		return
 	}
-	results := make([]*Task, len(tasks))
+	results := make([]*helpers.TaskResponse, len(tasks))
 	for i, t := range tasks {
-		var res Task
+		var res helpers.TaskResponse
 		res.ID = t.ID
 		res.Expression = t.Expression
 		res.IsExecuted = t.IsExecuted
@@ -59,6 +51,7 @@ func (ctrl *Controller) GetTasks(ctx *gin.Context) {
 		res.ExecutedAt = t.UpdatedAt
 		res.Error = t.Error
 		res.Value = t.Value
+		res.UserID = t.User.ID
 		results[i] = &res
 	}
 	ctx.JSON(http.StatusOK, &TasksListResponse{
@@ -67,33 +60,20 @@ func (ctrl *Controller) GetTasks(ctx *gin.Context) {
 	})
 }
 
-// HandleTask godoc
-// @Summary HandleTask
-// @Description saves task and sends it to execute
-// @ID handle-task
-// @Accept json
-// @Produce json
-// @Success 200 {object} ResponseDoc
-// @Router /api/v1/tasks [post]
 func (ctrl *Controller) HandleTask(ctx *gin.Context) {
 	var body models.Task
 	if err := ctx.ShouldBind(&body); err != nil {
 		helpers.WriteErrResponse(ctx, err)
 		return
 	}
-	task, err := ctrl.Service.CreateTask(body.Expression)
+	callerID := ctx.GetUint("callerID")
+	task, err := ctrl.Service.CreateTask(body.Expression, callerID)
 	if err != nil {
 		if errors.Is(err, clierrs.ErrTaskAlreadyCreated) {
-			var resp struct {
-				Response
-				models.TasksModel
-			}
-			resp.Response = Response{
+			ctx.JSON(http.StatusOK, &Response{
 				Status:  http.StatusText(http.StatusOK),
 				Message: "task already existed",
-			}
-			resp.TasksModel = *task
-			ctx.JSON(http.StatusOK, &resp)
+			})
 			return
 		}
 		helpers.WriteErrResponse(ctx, err)

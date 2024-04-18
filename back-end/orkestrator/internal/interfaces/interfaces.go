@@ -21,7 +21,7 @@ type AgentAPIClient interface {
 
 type TaskManager interface {
 	GetAllTasks() ([]*models.TasksModel, error)
-	CreateTask(expression string) (*models.TasksModel, error)
+	CreateTask(expression string, callerID uint) (*models.TasksModel, error)
 	DeleteTaskByID(taskID uint) error
 	DeleteTaskByExpression(expression string) error
 	SaveResult(res *models.Result) error

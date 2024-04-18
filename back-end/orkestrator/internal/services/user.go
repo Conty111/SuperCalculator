@@ -51,6 +51,7 @@ func (s *UserService) CreateUser(user *models.User) (*jwt.Token, error) {
 	return s.createToken(user.ID)
 }
 
+// setPassword hashing user password
 func (s *UserService) setPassword(user *models.User) error {
 	hashed, err := s.toHash(user.Password)
 	if err != nil {
@@ -62,9 +63,11 @@ func (s *UserService) setPassword(user *models.User) error {
 
 // GetUserByID returns user by the provided id or an error if the record is not found
 func (s *UserService) GetUserByID(userID, callerID uint) (*models.User, error) {
-	err := s.isCallerAdmin(callerID)
-	if err != nil {
-		return nil, err
+	if userID != callerID {
+		err := s.isCallerAdmin(callerID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	userExists, err := s.UserRepo.UserExists(userID)
@@ -178,6 +181,7 @@ func (s *UserService) createToken(userID uint) (*jwt.Token, error) {
 	return s.Auth.BuildToken(userID)
 }
 
+// GetAllUsers gets all available users from database
 func (s *UserService) GetAllUsers(callerID uint) ([]*models.User, error) {
 	err := s.isCallerAdmin(callerID)
 	if err != nil {
@@ -192,6 +196,7 @@ func (s *UserService) GetAllUsers(callerID uint) ([]*models.User, error) {
 	return users, nil
 }
 
+// GetAllUsers check if the caller is admin
 func (s *UserService) isCallerAdmin(callerID uint) error {
 	caller, err := s.UserRepo.GetUserByID(callerID)
 	if err != nil {

@@ -1,6 +1,9 @@
 package user
 
-import "github.com/Conty111/SuperCalculator/back-end/models"
+import (
+	"github.com/Conty111/SuperCalculator/back-end/models"
+	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/transport/web/helpers"
+)
 
 type MsgResponse struct {
 	Status  string `json:"status"`
@@ -9,9 +12,11 @@ type MsgResponse struct {
 }
 
 type UserInfo struct {
-	Username string      `json:"username"`
-	Email    string      `json:"email"`
-	Role     models.Role `json:"role"`
+	ID       uint                   `json:"ID"`
+	Username string                 `json:"username"`
+	Email    string                 `json:"email"`
+	Role     models.Role            `json:"role"`
+	Tasks    []helpers.TaskResponse `json:"tasks"`
 }
 
 // UserResponse is a declaration for a common user response

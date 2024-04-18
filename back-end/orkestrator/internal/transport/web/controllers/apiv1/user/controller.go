@@ -22,8 +22,6 @@ type Service interface {
 
 	CreateUser(user *models.User) (*jwt.Token, error)
 	Login(email, password string) (*models.User, *jwt.Token, error)
-	//GetMeByID(callerID uint) (*models.User, error)
-	//UpdateMeByID(callerID uint, param, value string) error
 }
 
 // Controller is a controller implementation for user endpoints
@@ -68,6 +66,7 @@ func (ctrl *Controller) GetUser(ctx *gin.Context) {
 			Role:     user.Role,
 			Username: user.Username,
 			Email:    user.Email,
+			Tasks:    helpers.SerializeTasks(user.ID, user.Tasks),
 		},
 	})
 }
@@ -91,6 +90,7 @@ func (ctrl *Controller) CreateUser(ctx *gin.Context) {
 		Status: http.StatusText(http.StatusOK),
 		Token:  token.String(),
 		UserInfo: UserInfo{
+			ID:       user.ID,
 			Role:     user.Role,
 			Username: user.Username,
 			Email:    user.Email,
@@ -165,6 +165,7 @@ func (ctrl *Controller) GetAllUsers(ctx *gin.Context) {
 	usersInfoList := make([]UserInfo, len(users))
 	for i, u := range users {
 		usersInfoList[i] = UserInfo{
+			ID:       u.ID,
 			Username: u.Username,
 			Email:    u.Email,
 			Role:     u.Role,
@@ -202,86 +203,36 @@ func (ctrl *Controller) Login(ctx *gin.Context) {
 			Role:     user.Role,
 			Username: user.Username,
 			Email:    user.Username,
+			Tasks:    helpers.SerializeTasks(user.ID, user.Tasks),
 		},
 	})
 }
 
-// GetMe godoc
-// @Tags users,me
-// @Summary Get User
-// @Description get me (using id from token)
-// @ID get-me
-// @Accept json
-// @Produce json
-// @Success 200 {object} Response
-// @Router /api/v1/users/me [get]
-//func (ctrl *Controller) GetMe(ctx *gin.Context) {
-//	callerID, err := uuid.FromString(ctx.GetString("callerID"))
-//	if err != nil {
-//		helpers.WriteErrResponse(ctx, err)
-//		return
-//	}
-//
-//	user, err := ctrl.Service.GetMeByID(callerID)
-//	if err != nil {
-//		helpers.WriteErrResponse(ctx, err)
-//		return
-//	}
-//
-//	ctx.JSON(http.StatusOK, &Response{
-//		Status: http.StatusText(http.StatusOK),
-//		Info: serializers.Info{
-//			ID:       callerID,
-//			FullName: user.FullName,
-//			Email:    user.Email,
-//			Role:     user.Role,
-//			Theme:    user.Theme,
-//		},
-//	})
-//}
+func (ctrl *Controller) GetMe(ctx *gin.Context) {
+	callerID := ctx.GetUint("callerID")
 
-// UpdateMe godoc
-// @Tags users,me
-// @Summary Update Me
-// @Description update user param by id from token
-// @ID update-me
-// @Accept json
-// @Produce json
-// @Param upd     body helpers.Upd true "A structure consisting of the parameter being updated and its new value."
-// @Success 200 {object} helpers.MsgResponse
-// @Failure 400 {object} helpers.ErrResponse
-// @Failure 403 {object} helpers.ErrResponse
-// @Router /api/v1/users/me [patch]
-//func (ctrl *Controller) UpdateMe(ctx *gin.Context) {
-//	callerID, err := uuid.FromString(ctx.GetString("callerID"))
-//	if err != nil {
-//		helpers.WriteErrResponse(ctx, err)
-//		return
-//	}
-//
-//	var upd helpers.Upd
-//	err = ctx.ShouldBind(&upd)
-//	if err != nil {
-//		helpers.WriteErrResponse(ctx, err)
-//		return
-//	}
-//
-//	err = ctrl.Service.UpdateMeByID(callerID, upd.Param, upd.Value)
-//	if err != nil {
-//		helpers.WriteErrResponse(ctx, err)
-//		return
-//	}
-//
-//	ctx.JSON(http.StatusOK, &helpers.MsgResponse{
-//		Status:  http.StatusText(http.StatusOK),
-//		Message: "user successfully updated",
-//	})
-//}
+	user, err := ctrl.Service.GetUserByID(callerID, callerID)
+	if err != nil {
+		helpers.WriteErrResponse(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, &UserResponse{
+		Status: http.StatusText(http.StatusOK),
+		UserInfo: UserInfo{
+			ID:       user.ID,
+			Username: user.Username,
+			Email:    user.Email,
+			Role:     user.Role,
+			Tasks:    helpers.SerializeTasks(user.ID, user.Tasks),
+		},
+	})
+}
 
 // DefineRoutes adds controller routes to the router
 func (ctrl *Controller) DefineRoutes(r gin.IRouter) {
 	// CRUD available only for superusers (except creation aka registration)
-	r.POST("/create", ctrl.CreateUser)
+	r.POST("/register", ctrl.CreateUser)
 	r.GET("/:userID", ctrl.GetUser)
 	r.PATCH("/:userID", ctrl.UpdateUser)
 	r.DELETE("/:userID", ctrl.DeleteUser)
@@ -290,9 +241,7 @@ func (ctrl *Controller) DefineRoutes(r gin.IRouter) {
 	r.GET("", ctrl.GetAllUsers)
 
 	// Available for everyone
-	//r.GET("/me", ctrl.GetMe)
+	r.GET("/me", ctrl.GetMe)
 	//r.PATCH("/me", ctrl.UpdateMe)
-	//r.GET("/me/attachedQuizzes", ctrl.GetMyAttachedQuizzes)
-	//r.GET("/me/createdQuizzes", ctrl.GetMyCreatedQuizzes)
 	r.POST("/login", ctrl.Login)
 }

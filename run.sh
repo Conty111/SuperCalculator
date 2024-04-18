@@ -30,5 +30,3 @@ do
             /app serve $((i-1))
 #            yes
 done
-
-#docker-compose up -d orkestrator

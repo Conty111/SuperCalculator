@@ -34,14 +34,6 @@ func (ctrl *Controller) GetRelativePath() string {
 	return ctrl.RelativePath
 }
 
-// SetSettings godoc
-// @Summary Set Calculation Settings
-// @Description set time duration to execute and timeout to workers
-// @ID set-settings
-// @Accept json
-// @Produce json
-// @Success 200 {object} ResponseDoc
-// @Router /api/v1/tasks/settings [put]
 func (ctrl *Controller) SetSettings(ctx *gin.Context) {
 	var body models.Settings
 	if err := ctx.ShouldBind(&body); err != nil {
@@ -54,14 +46,6 @@ func (ctrl *Controller) SetSettings(ctx *gin.Context) {
 	})
 }
 
-// GetWorkersInfo godoc
-// @Summary Get Workers Info
-// @Description returns info about all workers
-// @ID workers-info
-// @Accept json
-// @Produce json
-// @Success 200 {object} WorkersInfoResponse
-// @Router /api/v1/tasks/workers [get]
 func (ctrl *Controller) GetWorkersInfo(ctx *gin.Context) {
 	responses := ctrl.Service.GetWorkersInfo()
 	ctx.JSON(http.StatusOK, &WorkersListResponse[*models.AgentInfo]{

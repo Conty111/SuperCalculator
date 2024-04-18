@@ -4,6 +4,7 @@ import (
 	"github.com/Conty111/SuperCalculator/back-end/models"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/clierrs"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type TasksRepository struct {
@@ -24,7 +25,10 @@ func (tr *TasksRepository) GetNotExecutedTasks() ([]*models.TasksModel, error) {
 
 func (tr *TasksRepository) GetAllTasks() ([]*models.TasksModel, error) {
 	var tasks []*models.TasksModel
-	r := tr.Database.Model(models.TasksModel{}).Find(&tasks)
+	r := tr.Database.
+		Model(models.TasksModel{}).
+		Preload(clause.Associations).
+		Find(&tasks)
 	return tasks, r.Error
 }
 
@@ -32,7 +36,10 @@ func (tr *TasksRepository) GetByExpression(expression string) (*models.TasksMode
 	task := models.TasksModel{
 		Expression: expression,
 	}
-	r := tr.Database.Model(models.TasksModel{}).Find(&task)
+	r := tr.Database.
+		Model(models.TasksModel{}).
+		Preload(clause.Associations).
+		Find(&task)
 	if r.Error != nil {
 		return nil, r.Error
 	}
@@ -44,7 +51,11 @@ func (tr *TasksRepository) GetByExpression(expression string) (*models.TasksMode
 
 func (tr *TasksRepository) GetByID(taskID uint) (*models.TasksModel, error) {
 	var task models.TasksModel
-	r := tr.Database.Model(models.TasksModel{}).Where("id = ?", taskID).Find(&task)
+	r := tr.Database.
+		Model(models.TasksModel{}).
+		Where("id = ?", taskID).
+		Preload(clause.Associations).
+		Find(&task)
 	if r.Error != nil {
 		return nil, r.Error
 	}
@@ -56,10 +67,6 @@ func (tr *TasksRepository) GetByID(taskID uint) (*models.TasksModel, error) {
 
 func (tr *TasksRepository) Create(task *models.TasksModel) error {
 	return tr.Database.Model(models.TasksModel{}).Create(task).Error
-}
-
-func (tr *TasksRepository) UpdateByParam(task *models.TasksModel, param string, value any) error {
-	return tr.Database.Model(task).Update(param, value).Error
 }
 
 func (tr *TasksRepository) Update(task *models.TasksModel, fields map[string]interface{}) error {

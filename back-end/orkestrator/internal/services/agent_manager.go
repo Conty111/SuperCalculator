@@ -23,16 +23,10 @@ func NewAgentManager(
 	}
 }
 
+// SetSettings sets settings to the remote agents
 func (s *AgentManager) SetSettings(settings *models.Settings) []*helpers.AgentResponse[types.Nil] {
-	//wg := sync.WaitGroup{}
 	responses := make([]*helpers.AgentResponse[types.Nil], len(s.Agents))
-
 	for i, agent := range s.Agents {
-		//wg.Add(1)
-		//agent := agent
-		//i := i
-		//go func() {
-		//	defer wg.Done()
 		var res helpers.AgentResponse[types.Nil]
 
 		err := s.Client.SetAgentSettings(settings, &agent)
@@ -44,21 +38,14 @@ func (s *AgentManager) SetSettings(settings *models.Settings) []*helpers.AgentRe
 			res.Error = err.Error()
 		}
 		responses[i] = &res
-		//}()
 	}
-	//wg.Wait()
 	return responses
 }
 
+// GetWorkersInfo gets info and status from remote agents
 func (s *AgentManager) GetWorkersInfo() []*helpers.AgentResponse[*models.AgentInfo] {
-	//wg := sync.WaitGroup{}
 	responses := make([]*helpers.AgentResponse[*models.AgentInfo], len(s.Agents))
 	for i, agent := range s.Agents {
-		//wg.Add(1)
-		//agent := agent
-		//i := i
-		//go func() {
-		//	defer wg.Done()
 		var res helpers.AgentResponse[*models.AgentInfo]
 		info, err := s.Client.GetAgentInfo(&agent)
 		if err != nil {
@@ -70,8 +57,6 @@ func (s *AgentManager) GetWorkersInfo() []*helpers.AgentResponse[*models.AgentIn
 		}
 		res.Body = info
 		responses[i] = &res
-		//	}()
 	}
-	//wg.Wait()
 	return responses
 }

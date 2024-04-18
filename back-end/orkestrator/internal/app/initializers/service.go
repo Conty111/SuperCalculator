@@ -14,9 +14,9 @@ import (
 
 func InitializeTaskManager(container *dependencies.Container) interfaces.TaskManager {
 	rep := repository.NewTasksRepository(container.Database)
-	log.Debug().Msg("here")
 	return services.NewTaskManager(
 		rep,
+		container.UserManager,
 		container.Producer.InChan,
 		container.Config.App.Agents,
 		container.Config.App.TimeToRetry,
@@ -35,10 +35,6 @@ func InitializeAgentManager(container *dependencies.Container) interfaces.AgentM
 		container.Config.App.Agents,
 		client,
 	)
-}
-
-func InitializeUserManager(container *dependencies.Container) interfaces.UserManager {
-	return repository.NewUserRepository(container.Database)
 }
 
 func InitializeAuthManager(container *dependencies.Container) interfaces.AuthManager {

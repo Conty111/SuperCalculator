@@ -2,9 +2,8 @@ package services
 
 import (
 	"context"
-	"errors"
 	"github.com/Conty111/SuperCalculator/back-end/models"
-	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/clierrs"
+	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/interfaces"
 	"github.com/Conty111/SuperCalculator/back-end/orkestrator/internal/repository"
 	"github.com/rs/zerolog/log"
 	"sync"
@@ -12,90 +11,98 @@ import (
 )
 
 type TaskManager struct {
-	Repo        *repository.TasksRepository
-	ProduceChan chan<- models.Task
-	Agents      []models.AgentConfig
-	timeRetry   time.Duration
-	cachedTasks map[uint]interface{}
-	lock        sync.RWMutex
+	TasksRepository *repository.TasksRepository
+	UserRepo        interfaces.UserManager
+	ProduceChan     chan<- models.Task
+	Agents          []models.AgentConfig
+	timeRetry       time.Duration
+	cachedTasks     map[uint]interface{}
+	lock            sync.RWMutex
 }
 
-func NewTaskManager(rep *repository.TasksRepository,
+func NewTaskManager(
+	tasksRep *repository.TasksRepository,
+	userRep interfaces.UserManager,
 	produceCg chan<- models.Task,
 	agents []models.AgentConfig,
 	timeRetry time.Duration) *TaskManager {
+
 	return &TaskManager{
-		Repo:        rep,
-		ProduceChan: produceCg,
-		Agents:      agents,
-		timeRetry:   timeRetry,
-		cachedTasks: make(map[uint]interface{}),
-		lock:        sync.RWMutex{},
+		TasksRepository: tasksRep,
+		UserRepo:        userRep,
+		ProduceChan:     produceCg,
+		Agents:          agents,
+		timeRetry:       timeRetry,
+		cachedTasks:     make(map[uint]interface{}),
+		lock:            sync.RWMutex{},
 	}
 }
 
-// Start initing service (sends not executed tasks from db and enbales retrying)
+// Start starts task manager
 func (tm *TaskManager) Start(ctx context.Context) {
-	tasks, err := tm.Repo.GetNotExecutedTasks()
+	tm.getNotExecutedTasks()
+	tm.EnableRetrying(ctx)
+}
+
+// getNotExecutedTasks gets not executed tasks from database and saves it in manager cache
+func (tm *TaskManager) getNotExecutedTasks() {
+	tasks, err := tm.TasksRepository.GetNotExecutedTasks()
 	if err != nil {
 		log.Error().Err(err).Msg("error while trying to get not executed tasks from database")
 	}
 	for _, t := range tasks {
 		tm.cachedTasks[t.ID] = t
 	}
-	tm.EnableRetrying(ctx)
 }
 
 // GetAllTasks returns all tasks in database
 func (tm *TaskManager) GetAllTasks() ([]*models.TasksModel, error) {
-	return tm.Repo.GetAllTasks()
+	return tm.TasksRepository.GetAllTasks()
 }
 
 // CreateTask creates task in database
-func (tm *TaskManager) CreateTask(expression string) (*models.TasksModel, error) {
-	task := models.TasksModel{Expression: expression}
-	t, err := tm.Repo.GetByExpression(expression)
-	if errors.Is(err, clierrs.ErrTaskNotFound) {
-		err = tm.Repo.Create(&task)
-		if err != nil {
-			return nil, err
-		}
-		tm.lock.RLock()
-		tm.cachedTasks[task.ID] = expression
-		tm.lock.RUnlock()
-		msg := models.Task{
-			ID:         task.ID,
-			Expression: expression,
-		}
-		tm.ProduceChan <- msg
-		return &task, err
+func (tm *TaskManager) CreateTask(expression string, callerID uint) (*models.TasksModel, error) {
+	user, err := tm.UserRepo.GetUserByID(callerID)
+	if err != nil {
+		return nil, err
 	}
-	if err == nil {
-		return t, clierrs.ErrTaskAlreadyCreated
+	task := models.TasksModel{Expression: expression, User: user}
+	err = tm.TasksRepository.Create(&task)
+	if err != nil {
+		return nil, err
 	}
-	return nil, err
+	tm.lock.RLock()
+	tm.cachedTasks[task.ID] = expression
+	tm.lock.RUnlock()
+	msg := models.Task{
+		ID:         task.ID,
+		Expression: expression,
+	}
+	tm.ProduceChan <- msg
+	return &task, err
+
 }
 
 // DeleteTaskByID deletes task by id
 func (tm *TaskManager) DeleteTaskByID(taskID uint) error {
 	t := &models.TasksModel{}
 	t.ID = taskID
-	return tm.Repo.Delete(t)
+	return tm.TasksRepository.Delete(t)
 }
 
 // DeleteTaskByExpression deletes task by expression
 func (tm *TaskManager) DeleteTaskByExpression(expression string) error {
 	t := &models.TasksModel{}
 	t.Expression = expression
-	return tm.Repo.Delete(t)
+	return tm.TasksRepository.Delete(t)
 }
 
-// SaveResult saves (updates) result in database
+// SaveResult saves (updates) task in database if it didn't be executed
 func (tm *TaskManager) SaveResult(res *models.Result) error {
 	tm.lock.RLock()
 	delete(tm.cachedTasks, res.ID)
 	tm.lock.RUnlock()
-	t, err := tm.Repo.GetByID(res.ID)
+	t, err := tm.TasksRepository.GetByID(res.ID)
 	if err != nil {
 		return err
 	}
@@ -109,9 +116,10 @@ func (tm *TaskManager) SaveResult(res *models.Result) error {
 	if res.Error != "" {
 		fields["error"] = res.Error
 	}
-	return tm.Repo.Update(t, fields)
+	return tm.TasksRepository.Update(t, fields)
 }
 
+// EnableRetrying starts goroutine that periodically retries cached tasks
 func (tm *TaskManager) EnableRetrying(ctx context.Context) {
 	go func() {
 		for {
@@ -147,7 +155,7 @@ func (tm *TaskManager) RetryTasks() {
 	if len(ids) > 0 {
 		log.Info().Any("taskIDs", ids).Msg("retrying tasks")
 		for _, id := range ids {
-			t, err := tm.Repo.GetByID(id)
+			t, err := tm.TasksRepository.GetByID(id)
 			if err != nil {
 				log.Error().Err(err).Msg("failed get task by id")
 				continue
