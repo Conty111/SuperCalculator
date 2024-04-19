@@ -124,7 +124,7 @@ var _ = Describe("User/Controller", func() {
 		Context("common user is trying to get an other user", func() {
 			It("should return status forbidden", func() {
 				//userRepo.Mock.
-				//	On("UserExists", commonUserID).
+				//	On("UserExists", superUserID).
 				//	Once().
 				//	Return(true, nil)
 				userRepo.Mock.
@@ -132,7 +132,7 @@ var _ = Describe("User/Controller", func() {
 					Once().
 					Return(commonUser, nil)
 
-				ctx.AddParam("userID", strconv.Itoa(int(commonUserID)))
+				ctx.AddParam("userID", strconv.Itoa(int(superUserID)))
 				ctx.Set("callerID", commonUserID)
 				ctx.Request = httptest.NewRequest(http.MethodGet, URIPrefix+"/"+strconv.Itoa(int(superUserID)), nil)
 
