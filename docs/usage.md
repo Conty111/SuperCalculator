@@ -9,7 +9,7 @@
 - ### [Project sructure](..%2FREADME.md#project-structure)
 
 ## How to use
-Сразу к запросам к приложению: **[Requests](#curl-requests)**
+* Сразу к curl запросам: **[Requests](#curl-requests)**
 
 По умолчанию, при перезапуске системы в Docker Compose данные НЕ сохраняются.\
 Если хотите, чтобы данные сохранялись, раскомментируйте строки volume для db в [docker-compose.yml](..%2Fdocker-compose.yml )
@@ -82,6 +82,15 @@ make admin-sqlite-local
 И тогда создастся пользователь admin с данными:\
 * email: admin@mail.ru
 * password: 12345
+
+## Tests
+Для запуска unit-тестов можно использовать ```make test-unit``` или ```go test -v -cover ./...```\
+Модульные тесты были написаны в основном для 2 модулей:
+- Agent - вычисление математических выражений (23 теста, [calculator_test.go](..%2Fback-end%2Fagent%2Finternal%2Fservices%2Fcalculator_test.go))
+- Orkestrator - контроллер для работы с пользователями (18 тестов, [controller_test.go](..%2Fback-end%2Forkestrator%2Finternal%2Ftransport%2Fweb%2Fcontrollers%2Fapiv1%2Fuser%2Fcontroller_test.go))
+
+Остальную логику необходимо тестировать в рамках интеграционных тестов.\
+На данный интеграционные тесты отсутствуют
 
 ## Requests
 
