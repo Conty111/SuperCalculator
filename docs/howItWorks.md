@@ -2,11 +2,11 @@
 
 ## Table of contents
 
-- ### [Description](..%2FREADME.md#description)
+- ### [What is it?](..%2FREADME.md#what-is-it)
 - ### [How to run?](..%2FREADME.md#running)
-- ### [How to use?](#использование)
-- ### [How it works?](FhowItWorks.md)
-- ### [Project sructure](..%2FREADME.md#structure)
+- ### [How to use?](usage.md)
+- ### [How it works?](howItWorks.md)
+- ### [Project sructure](..%2FREADME.md#project-structure)
 
 ## How it works
 
