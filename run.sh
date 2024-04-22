@@ -10,7 +10,7 @@ if [ -z "$(docker images -q svc-agent:script 2> /dev/null)" ]; then
   docker build -t svc-agent:script -f DockerfileAgent .
 fi
 # Запуск docker-compose (все компоненты, кроме agent)
-docker compose up -d orkestrator
+docker-compose up -d orkestrator
 
 for ((i=1;i<agents_count+1;i++))
 do
@@ -24,7 +24,7 @@ do
             -p "$http_port:$http_port" \
             --env-file=enviroments/agent.env \
             --env-file=enviroments/kafka.env \
-            --env-file=enviroments/.env \
+            --env-file=enviroments/sys.env \
             --network=supercalculator_calculator-network \
             svc-agent:script \
             /app serve $((i-1))
