@@ -4,4 +4,4 @@
 .idea
 ./build/
 .env
-#back-end/db/local.db
+./back-end/db/postgres

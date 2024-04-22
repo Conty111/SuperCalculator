@@ -10,7 +10,7 @@ if (-not (docker images -q svc-agent:script 2> $null)) {
 }
 
 # Запуск docker-compose (все компоненты, кроме agent)
-docker compose up -d orkestrator
+docker-compose up -d orkestrator
 
 for ($i=1; $i -le $agents_count; $i++) {
     $agent = (Get-Content -Raw -Path "system_config_docker.json" | ConvertFrom-Json).agents[$i - 1]
@@ -25,7 +25,7 @@ for ($i=1; $i -le $agents_count; $i++) {
         -p "$http_port:$http_port" `
         --env-file=enviroments/agent.env `
         --env-file=enviroments/kafka.env `
-        --env-file=enviroments/.env `
+        --env-file=enviroments/sys.env `
         --network=supercalculator_calculator-network `
         svc-agent:script `
         /app serve $i
