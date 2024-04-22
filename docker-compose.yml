@@ -54,8 +54,8 @@ services:
       - POSTGRES_DB=postgres
     ports:
       - "5433:5432"
-    volumes:
-      - ./back-end/db/data/postgres:/var/lib/postgresql/data
+#    volumes:
+#      - ./back-end/db/data/postgres:/var/lib/postgresql/data
     networks:
       - calculator-network
 

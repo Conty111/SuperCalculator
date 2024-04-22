@@ -10,105 +10,375 @@
 			"name": "Local",
 			"item": [
 				{
-					"name": "Create task",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"expression\": \"11+11+11+21111/0\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
+					"name": "User",
+					"item": [
+						{
+							"name": "Login",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// pm.environment.get(\"USER_EMAIL\");"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [],
+										"type": "text/javascript"
+									}
 								}
-							}
-						},
-						"url": {
-							"raw": "http://localhost:8000/api/v1/manager",
-							"protocol": "http",
-							"host": [
-								"localhost"
 							],
-							"port": "8000",
-							"path": [
-								"api",
-								"v1",
-								"manager"
-							]
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"email\": \"{{USER_EMAIL}}\",\n    \"password\": \"{{USER_PASSWORD}}\"\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://{{ADDRESS}}:{{PORT}}{{API_VER}}/users/login",
+									"protocol": "http",
+									"host": [
+										"{{ADDRESS}}"
+									],
+									"port": "{{PORT}}{{API_VER}}",
+									"path": [
+										"users",
+										"login"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Register",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"username\": \"testUser\",\n    \"email\": \"testmail@mail.ru\",\n    \"password\": \"123\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://{{ADDRESS}}:{{PORT}}{{API_VER}}/users/register",
+									"protocol": "http",
+									"host": [
+										"{{ADDRESS}}"
+									],
+									"port": "{{PORT}}{{API_VER}}",
+									"path": [
+										"users",
+										"register"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get me",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://{{ADDRESS}}:{{PORT}}{{API_VER}}/users/me",
+									"protocol": "http",
+									"host": [
+										"{{ADDRESS}}"
+									],
+									"port": "{{PORT}}{{API_VER}}",
+									"path": [
+										"users",
+										"me"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get all users",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://{{ADDRESS}}:{{PORT}}{{API_VER}}/users",
+									"protocol": "http",
+									"host": [
+										"{{ADDRESS}}"
+									],
+									"port": "{{PORT}}{{API_VER}}",
+									"path": [
+										"users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete user",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "http://{{ADDRESS}}:{{PORT}}{{API_VER}}/users/2",
+									"protocol": "http",
+									"host": [
+										"{{ADDRESS}}"
+									],
+									"port": "{{PORT}}{{API_VER}}",
+									"path": [
+										"users",
+										"2"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update user",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"param\": \"Username\",\n    \"value\": \"NewTestUser\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://{{ADDRESS}}:{{PORT}}{{API_VER}}/users/2",
+									"protocol": "http",
+									"host": [
+										"{{ADDRESS}}"
+									],
+									"port": "{{PORT}}{{API_VER}}",
+									"path": [
+										"users",
+										"2"
+									]
+								}
+							},
+							"response": []
 						}
-					},
-					"response": []
+					]
 				},
 				{
-					"name": "Get expressions",
+					"name": "Tasks",
+					"item": [
+						{
+							"name": "Create task",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"expression\": \"111+11+22\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://{{ADDRESS}}:{{PORT}}{{API_VER}}/tasks",
+									"protocol": "http",
+									"host": [
+										"{{ADDRESS}}"
+									],
+									"port": "{{PORT}}{{API_VER}}",
+									"path": [
+										"tasks"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get all expressions",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://{{ADDRESS}}:{{PORT}}{{API_VER}}/tasks",
+									"protocol": "http",
+									"host": [
+										"{{ADDRESS}}"
+									],
+									"port": "{{PORT}}{{API_VER}}",
+									"path": [
+										"tasks"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Workers",
+					"item": [
+						{
+							"name": "Workers Info",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://{{ADDRESS}}:{{PORT}}{{API_VER}}/workers/info",
+									"protocol": "http",
+									"host": [
+										"{{ADDRESS}}"
+									],
+									"port": "{{PORT}}{{API_VER}}",
+									"path": [
+										"workers",
+										"info"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Set settings",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"time_retry\": 30,\n    \"timeout_response\": 5,\n    \"add_time\": 5000,\n    \"division_time\": 500,\n    \"subtract_time\": 500,\n    \"multiply_time\": 500\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://{{ADDRESS}}:{{PORT}}{{API_VER}}/workers/settings",
+									"protocol": "http",
+									"host": [
+										"{{ADDRESS}}"
+									],
+									"port": "{{PORT}}{{API_VER}}",
+									"path": [
+										"workers",
+										"settings"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Orkestrator status",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8000/api/v1/manager/tasks",
+							"raw": "http://{{ADDRESS}}:{{PORT}}{{API_VER}}/status",
 							"protocol": "http",
 							"host": [
-								"localhost"
+								"{{ADDRESS}}"
 							],
-							"port": "8000",
+							"port": "{{PORT}}{{API_VER}}",
 							"path": [
-								"api",
-								"v1",
-								"manager",
-								"tasks"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Workers Info",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "http://localhost:8000/api/v1/manager/workers",
-							"protocol": "http",
-							"host": [
-								"localhost"
-							],
-							"port": "8000",
-							"path": [
-								"api",
-								"v1",
-								"manager",
-								"workers"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Set settings",
-					"request": {
-						"method": "PUT",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"time_retry\": 1,\n    \"timeout_response\": 2,\n    \"add_time\": 5000,\n    \"division_time\": 6000,\n    \"subtract_time\": 10,\n    \"multiply_time\": 5\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "http://localhost:8000/api/v1/manager/settings",
-							"protocol": "http",
-							"host": [
-								"localhost"
-							],
-							"port": "8000",
-							"path": [
-								"api",
-								"v1",
-								"manager",
-								"settings"
+								"status"
 							]
 						}
 					},
