@@ -87,3 +87,6 @@ _P. S. front-end часть в проекте на данный отсутств
 │     │ └── transport - транспортный слой (htpp, kafka, grpc)
 └── front-end - здесь должен был быть рабочий фронт((
 ```
+
+Поставьте звездочку :3
+![image](https://github.com/Conty111/SuperCalculator/assets/90860829/adfce3ff-7490-427c-aa03-26f904f2503b)
