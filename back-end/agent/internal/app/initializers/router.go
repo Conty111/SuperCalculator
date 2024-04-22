@@ -6,7 +6,6 @@ import (
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/web/controllers/apiv1"
 	apiv1Calculator "github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/web/controllers/apiv1/calculator"
 	apiv1Status "github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/web/controllers/apiv1/status"
-	apiv1Swagger "github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/web/controllers/apiv1/swagger"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/web/middleware"
 	"github.com/Conty111/SuperCalculator/back-end/agent/internal/transport/web/router"
 	"github.com/gin-gonic/gin"
@@ -38,6 +37,5 @@ func buildControllers(container *dependencies.Container) []apiv1.Controller {
 	return []apiv1.Controller{
 		apiv1Calculator.NewController(container.Calculator),
 		apiv1Status.NewController(container.BuildInfo, container.Monitor),
-		apiv1Swagger.NewController(),
 	}
 }
