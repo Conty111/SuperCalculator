@@ -31,7 +31,7 @@ _P. S. front-end часть в проекте на данный отсутств
 Запустить можно локально, с помощью Docker Compose или комбинированно (kafka запускается в любом случае в docker compose).
 
 1. С помощью Docker Compose: запустится система с агентами из [system_config_docker.json](system_config_docker.json)
-
+   Сначала установить jq команду: [Windows](https://bobbyhadz.com/blog/install-and-use-jq-on-windows), [Linux or MacOS](https://jqlang.github.io/jq/download/)
    На **Linux**
     ```
     ./run.sh
@@ -42,7 +42,7 @@ _P. S. front-end часть в проекте на данный отсутств
     .\run.ps1
     .\stop.ps1
     ```
-2. Локально:
+3. Локально:
    1. Установить зависимости с помощью ```go mod tidy```
    2. Запуск Kafka
    ```
