@@ -30,7 +30,7 @@ _P. S. front-end часть в проекте на данный отсутств
 ### Running
 Запустить можно локально, с помощью Docker Compose или комбинированно (kafka запускается в любом случае в docker compose).
 
-1. С помощью Docker Compose: запустится система с агентами из [system_config_docker.json](system_config_docker.json)
+1. С помощью Docker Compose: запустится система с агентами из [system_config_docker.json](system_config_docker.json) \
    Сначала установить jq команду: [Windows](https://bobbyhadz.com/blog/install-and-use-jq-on-windows), [Linux or MacOS](https://jqlang.github.io/jq/download/)
    На **Linux**
     ```
